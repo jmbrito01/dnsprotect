@@ -26,6 +26,12 @@ export class Logger {
     }
   }
 
+  public warn(...args: any[]): void {
+    const formatted = this.formatInput(chalk.bold('WARN:'), chalk.dim.yellow(...this.formatInputTypes(args)));
+    
+    console.warn(...formatted); 
+  }
+
   private formatInput(...args: any[]): any[] {
     let newArgs = args;
     if (this.options.prefix) {
