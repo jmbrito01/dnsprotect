@@ -18,6 +18,13 @@ export interface DNSQueryOptions {
 
 type DNSQueryPromiseResolver = (value: Uint8Array | PromiseLike<Uint8Array>) => void;
 type DNSQueryPromiseRejecter = (reason?: any) => void;
+
+export class ConnectionClosedError extends Error {
+  constructor(transactionId: number) {
+    super(`The transaction with ID ${transactionId} was rejected because the connection was closed.`);
+  }
+}
+
 export interface DNSQueryPromiseMapper {
   resolve: DNSQueryPromiseResolver;
   reject: DNSQueryPromiseRejecter;
@@ -29,7 +36,7 @@ export class DNSQuery {
   protected isTLSReady: boolean = false;
   protected readonly tlsPromises: Map<number, DNSQueryPromiseMapper> = new Map();
   protected readonly tlsQueue: ({data: Uint8Array}&DNSQueryPromiseMapper)[] = [];
-  protected readonly logger = new Logger({ prefix: 'DNSQuery' });
+  protected readonly logger = new Logger({ prefix: 'DNS QUERY' });
 
   constructor(protected readonly options: DNSQueryOptions) {
     if (options.queryMethod === DNSQueryMethod.DNS_OVER_HTTPS) {
@@ -142,6 +149,13 @@ export class DNSQuery {
   private onTLSClose(): void {
     this.isTLSReady = false;
     this.logger.log('DNS-Over-TLS - Connection closed. Reconnecting...');
+
+    this.tlsPromises.forEach((promise, key) => {
+      this.logger.log('DNS-Over-TLS - Rejecting query', key, 'because connection closed.');
+      promise.reject(new ConnectionClosedError(key));
+      this.tlsPromises.delete(key);
+    });
+
     this.connectTLS();
   }
 
@@ -166,7 +180,7 @@ export class DNSQuery {
       this.tlsPromises.delete(transactionId);
       this.logger.log('DNS-Over-TLS - Cleared one promise from promise queue, total count is:', this.tlsPromises.size);
     } else {
-      this.logger.error('DNS-Over-TLS - Could not find the correct promise for:', transactionId);
+      this.logger.warn('DNS-Over-TLS - Could not find the correct promise for:', transactionId);
     }
   }
 }
