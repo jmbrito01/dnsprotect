@@ -1,5 +1,5 @@
 import dgram from 'dgram';
-import { DNSQuery } from '../query';
+import { DNSQuery, DNSQueryMethod } from '../query';
 import { BaseInjection, BaseInjectionPhase } from './injections/base';
 //@ts-ignore
 import Packet from 'native-dns-packet';
@@ -13,6 +13,7 @@ import { LoadCacheInjection } from './injections/redis-cache/load-cache';
 
 export const DEFAULT_UDP_PORT = 53;
 export const MAX_UDP_PACKET_SIZE = 512;
+export const DEFAULT_DNS_QUERY_METHOD = DNSQueryMethod.DNS_OVER_HTTPS;
 
 export interface DNSUDPInterceptorInjections {
   blackList?: false|BlackListInjectionOptions;
@@ -22,6 +23,7 @@ export interface DNSUDPInterceptorInjections {
 export interface DNSUDPInterceptorOptions {
   forwardServer: string;
   forwardRetries: number;
+  queryMethod?: DNSQueryMethod;
   port?: number;
   injections: DNSUDPInterceptorInjections;
 }
@@ -39,6 +41,9 @@ export class DNSUDPInterceptor {
     if (!this.options.forwardRetries) {
       this.options.forwardRetries = 1;
     }
+    if (!this.options.queryMethod) {
+      this.options.queryMethod = DEFAULT_DNS_QUERY_METHOD;
+    }
 
     this.server.on('listening', this.onUDPListening.bind(this));
     this.server.on('error', this.onUDPError.bind(this));
@@ -46,6 +51,7 @@ export class DNSUDPInterceptor {
 
     this.query = new DNSQuery({
       forwardServer: this.options.forwardServer,
+      queryMethod: this.options.queryMethod,
     });
 
     this.loadInjections();
@@ -92,7 +98,7 @@ export class DNSUDPInterceptor {
           warnFn: (...args: any[]) => {
             this.logger.log('DNS Query returned error, retrying...');
           }
-        }, () => this.query.secureQuery(msg));
+        }, () => this.query.query(msg));
         forwardTime = Date.now() - startForwardTime;
 
         const beforeResponseResult = await BaseInjection.executeInjections(this.injections, msg, BaseInjectionPhase.BEFORE_RESPONSE, response);

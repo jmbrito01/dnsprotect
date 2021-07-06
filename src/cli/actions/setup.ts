@@ -4,8 +4,9 @@ import { join } from "path";
 import { DEFAULT_UDP_PORT, DNSUDPInterceptor, DNSUDPInterceptorInjections } from "../../interceptor/udp";
 import { ConfigLoader } from "../../util/config-loader";
 import { Logger } from "../../util/logger";
-import inquirer, { Question } from 'inquirer';
+import inquirer, { Answers, Question } from 'inquirer';
 import { DEFAULT_EMPTY_TTL_CACHE, RedisClientInjectionOptions } from "../../interceptor/injections/redis-cache";
+import { DNSQueryMethod } from "../../query";
 
 export class SetupCommandAction extends CommandLineAction {
   private outputFile!: CommandLineStringParameter;
@@ -91,6 +92,16 @@ const INQUIRER_QUESTIONS: inquirer.QuestionCollection[] = [
     default: 53,
   },
   {
+    type: 'list',
+    name: 'queryMethod',
+    message: 'Which DNS query method should be used?',
+    choices: [
+      { value: DNSQueryMethod.DNS_OVER_HTTPS, name: 'DNS over HTTPS (Default)' },
+      { value: DNSQueryMethod.DNS_OVER_TLS, name: 'DNS over TLS' },
+    ],
+    default: DNSQueryMethod.DNS_OVER_HTTPS,
+  },
+  {
     type: 'checkbox',
     name: 'injections',
     message: 'Which injections do you wish to enable?',
@@ -141,6 +152,7 @@ const REDIS_SETUP: inquirer.QuestionCollection[] = [
     name: 'cachedEmptyResultsTTL',
     message: 'How many time(in seconds) empty results should be cached?',
     default: DEFAULT_EMPTY_TTL_CACHE,
-    prefix: '[REDIS]'
+    prefix: '[REDIS]',
+    when: (answers: Answers) => answers.cacheEmptyResults,
   }
 ]
