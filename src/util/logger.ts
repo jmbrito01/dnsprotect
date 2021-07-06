@@ -1,4 +1,4 @@
-import chalk, { gray, red } from 'chalk';
+import chalk, { gray, red, white } from 'chalk';
 export interface LoggerOptions {
   prefix?: string;
 }
@@ -7,7 +7,7 @@ export class Logger {
   constructor(private readonly options: LoggerOptions) {}
 
   public info(...args: any[]): void {
-    const formatted = this.formatInput(chalk.bold('INFO:'), ...this.formatInputTypes(args));
+    const formatted = this.formatInput(chalk.bold('INFO:'), chalk.white(...this.formatInputTypes(args)));
 
     console.info(...formatted);
   }
