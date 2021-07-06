@@ -101,7 +101,13 @@ export class DNSQuery {
       this.tlsClient.write(data, (err: any) => {
         this.logger.log('DNS-Over-TLS - Sent TID:', transactionId);
 
-        if (err) return reject(err);
+        if (err) {
+          if (this.tlsPromises.has(transactionId)) {
+            this.logger.log('DNS-Over-TLS - Deleted Promise TID:', transactionId, 'because it was rejected');
+            this.tlsPromises.delete(transactionId);
+          }
+          return reject(err);
+        }
 
         this.tlsPromises.set(transactionId, { resolve, reject });
       });
