@@ -113,6 +113,9 @@ export class DNSQuery {
       host: this.options.forwardServer,
       port: DEFAULT_DNS_TLS_PORT,
     });
+
+    this.tlsClient.setKeepAlive(true);
+
     this.tlsClient.on('data', this.onTLSData.bind(this));
     this.tlsClient.on('secureConnect', () => {
       this.isTLSReady = true;
