@@ -10,6 +10,7 @@ import Redis from 'redis';
 import { RedisClientInjectionOptions } from './injections/redis-cache';
 import { SaveCacheInjection } from './injections/redis-cache/save-cache';
 import { LoadCacheInjection } from './injections/redis-cache/load-cache';
+import chalk from 'chalk';
 
 export const DEFAULT_UDP_PORT = 53;
 export const MAX_UDP_PACKET_SIZE = 512;
@@ -104,7 +105,7 @@ export class DNSUDPInterceptor {
         const beforeResponseResult = await BaseInjection.executeInjections(this.injections, msg, BaseInjectionPhase.BEFORE_RESPONSE, response);
         if (beforeResponseResult.halt) {
           const totalTime = Date.now() - startTime;
-          this.logger.info(`DNS Query Time(BLOCK): ${totalTime}ms (Proxy: ${totalTime}ms / Forward Server: ${forwardTime}ms)`);
+          this.logger.info(`DNS Query Time(${chalk.bold.red('BLOCK')}): ${totalTime}ms (Proxy: ${totalTime}ms / Forward Server: ${forwardTime}ms)`);
           return;
         }
 
@@ -112,7 +113,7 @@ export class DNSUDPInterceptor {
 
         return this.server.send(response, rinfo.port, rinfo.address, async () => {
           const totalTime = Date.now() - startTime;
-          this.logger.log(`DNS Query Time(OK): ${totalTime}ms (Proxy: ${totalTime-forwardTime}ms / Forward Server: ${forwardTime}ms)`)
+          this.logger.log(`DNS Query Time(${chalk.bold.green('OK')}): ${totalTime}ms (Proxy: ${totalTime-forwardTime}ms / Forward Server: ${forwardTime}ms)`)
 
           await BaseInjection.executeInjections(this.injections, msg, BaseInjectionPhase.AFTER_RESPONSE, response);
         });
@@ -121,12 +122,11 @@ export class DNSUDPInterceptor {
         this.logger.error('Error with DNS Query: ', Buffer.from(msg).toString('base64'));
         this.logger.error('Error with DNS Query: ', packet.question[0]);
         return;
-       // this.logger.error(e);
       }
       
     } 
     const totalTime = Date.now() - startTime;
-    this.logger.info(`DNS Query Time(BLOCK): ${totalTime}ms (Proxy: ${totalTime}ms)`)
+    this.logger.info(`DNS Query Time(${chalk.bold.red('BLOCK')}): ${totalTime}ms (Proxy: ${totalTime}ms)`)
   }
 
   private async onUDPListening(): Promise<void> {
