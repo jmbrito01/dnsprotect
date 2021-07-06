@@ -1,0 +1,14 @@
+{
+  "forwardServer": "1.0.0.1",
+  "forwardRetries": 1,
+  "port": 53,
+  "injections": {
+    "blackList": {
+      "lists": [
+      ]
+    },
+    "redis": {
+      "url": "redis://localhost:6379"
+    }
+  }
+}
