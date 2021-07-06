@@ -11,6 +11,7 @@ import { RedisClientInjectionOptions } from './injections/redis-cache';
 import { SaveCacheInjection } from './injections/redis-cache/save-cache';
 import { LoadCacheInjection } from './injections/redis-cache/load-cache';
 import chalk from 'chalk';
+import { DNSOverrideInjection, DNSOverrideInjectionOptions } from './injections/dns-override';
 
 export const DEFAULT_UDP_PORT = 53;
 export const MAX_UDP_PACKET_SIZE = 512;
@@ -19,6 +20,7 @@ export const DEFAULT_DNS_QUERY_METHOD = DNSQueryMethod.DNS_OVER_HTTPS;
 export interface DNSUDPInterceptorInjections {
   blackList?: false|BlackListInjectionOptions;
   redis?: false|RedisClientInjectionOptions;
+  dnsOverride?: false|DNSOverrideInjectionOptions;
 }
 
 export interface DNSUDPInterceptorOptions {
@@ -75,6 +77,10 @@ export class DNSUDPInterceptor {
       this.injections.push(new SaveCacheInjection(this.options.injections.redis));
       this.injections.push(new LoadCacheInjection(this.options.injections.redis));
     }
+
+    if (this.options.injections.dnsOverride) {
+      this.injections.push(new DNSOverrideInjection(this.options.injections.dnsOverride));
+    }
   }
 
   private async onUDPError(error: Error): Promise<void> {
@@ -119,8 +125,11 @@ export class DNSUDPInterceptor {
         });
       } catch (e) {
         const packet = Packet.parse(msg);
-        this.logger.error('Error with DNS Query: ', Buffer.from(msg).toString('base64'));
-        this.logger.error('Error with DNS Query: ', packet.question[0]);
+        
+        if (e instanceof Error) {
+          this.logger.error('Error with DNS Query: ', e.message);
+          this.logger.error(e.stack);  
+        }
         return;
       }
       

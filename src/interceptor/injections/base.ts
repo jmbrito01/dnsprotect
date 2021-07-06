@@ -54,14 +54,14 @@ export abstract class BaseInjection {
       if (!result) {
         throw new Error('Cant execute injections after query with no result');
       }
-      let response = Packet.parse(result);
+      let injectionResponse = Packet.parse(result);
 
       const promises = injections
         .filter(injection => injection.phase === BaseInjectionPhase.BEFORE_RESPONSE)
         .map(async injection => {
           return {
-            needsExecution: await injection.needsExecution(request, response),
-            execute: injection.onExecute.bind(this, request, response),
+            needsExecution: await injection.needsExecution(request, injectionResponse),
+            execute: injection.onExecute.bind(injection, request, injectionResponse),
           }
         });
       
@@ -73,15 +73,22 @@ export abstract class BaseInjection {
           halt: true,
         }
 
-        response = injectionResult;
+        injectionResponse = injectionResult;
       }
 
-      const buffer = Buffer.alloc(MAX_UDP_PACKET_SIZE);
-      Packet.write(buffer, response);
-      return {
-        halt: false,
-        response: buffer,
+      if (injectionResponse.response) {
+        const buffer = Buffer.alloc(MAX_UDP_PACKET_SIZE*2);
+        Packet.write(buffer, injectionResponse.response);
+        return {
+          halt: false,
+          response: buffer,
+        }  
+      } else {
+        return {
+          halt: false
+        }
       }
+      
     } else if (phase === BaseInjectionPhase.AFTER_RESPONSE) {
       let response = Packet.parse(result);
       const promises = injections

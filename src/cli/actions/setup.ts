@@ -7,6 +7,7 @@ import { Logger } from "../../util/logger";
 import inquirer, { Answers, Question } from 'inquirer';
 import { DEFAULT_EMPTY_TTL_CACHE, RedisClientInjectionOptions } from "../../interceptor/injections/redis-cache";
 import { DNSQueryMethod } from "../../query";
+import { DNSOverrideMapper } from "../../interceptor/injections/dns-override";
 
 export class SetupCommandAction extends CommandLineAction {
   private outputFile!: CommandLineStringParameter;
@@ -64,10 +65,25 @@ export class SetupCommandAction extends CommandLineAction {
         lists,
       }
     }
+
     if (injections.indexOf('redis') !== -1) {
       const response = await inquirer.prompt(REDIS_SETUP);
       injectionResult.redis = response as RedisClientInjectionOptions;
     }
+
+    if (injections.indexOf('dnsOverride') !== -1) {
+      const mappers: DNSOverrideMapper = {};
+      let response;
+      do {
+        response = await inquirer.prompt(DNS_OVERRIDE_SETUP);
+        mappers[response.domainName] = response.domainAddress;
+      } while (response.newItem);
+
+      injectionResult.dnsOverride = {
+        mappers,
+      }
+    }
+
     return injectionResult;
   }
 }
@@ -106,9 +122,9 @@ const INQUIRER_QUESTIONS: inquirer.QuestionCollection[] = [
     name: 'injections',
     message: 'Which injections do you wish to enable?',
     choices: [
-      { value: { doh: true }, name: 'Force DNS-over-HTTPS', disabled: 'Always ON', checked: true },
       { value: 'blackList', name: 'Black List', checked: true },
       { value: 'redis', name: 'Redis Cache', checked: true },
+      { value: 'dnsOverride', name: 'DNS Override', checked: true },
     ]
   }
 ]
@@ -154,5 +170,29 @@ const REDIS_SETUP: inquirer.QuestionCollection[] = [
     default: DEFAULT_EMPTY_TTL_CACHE,
     prefix: '[REDIS]',
     when: (answers: Answers) => answers.cacheEmptyResults,
+  }
+]
+
+const DNS_OVERRIDE_SETUP: inquirer.QuestionCollection[] = [
+  {
+    type: 'input',
+    name: 'domainName',
+    message: 'Type the domain you wish to override:',
+    prefix: '[DNS OVERRIDE]',
+    suffix: '(e.g. google.com)',
+  },
+  {
+    type: 'input',
+    name: 'domainAddress',
+    message: 'Type the address you wish to return:',
+    prefix: '[DNS OVERRIDE]',
+    suffix: '(e.g. 127.0.0.1)',
+  },
+  {
+    type: 'confirm',
+    name: 'newItem',
+    message: 'Do you wish to add a new domain to override?',
+    prefix: '[DNS OVERRIDE]',
+    default: false,
   }
 ]
