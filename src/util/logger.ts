@@ -1,4 +1,4 @@
-import chalk, { gray, red, white } from 'chalk';
+import chalk from 'chalk';
 export interface LoggerOptions {
   prefix?: string;
 }
