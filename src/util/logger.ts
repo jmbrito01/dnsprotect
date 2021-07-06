@@ -40,6 +40,10 @@ export class Logger {
       if (typeof arg === 'number') {
         return `${chalk.yellow(arg.toString())}`;
       }
+      
+      if (typeof arg === 'object') {
+        return `\n${chalk.bgWhite.black(JSON.stringify(arg, undefined, 2))}`
+      }
 
       return arg;
     });
