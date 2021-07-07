@@ -23,6 +23,7 @@ describe('DNSQuery with DNS-Over-HTTPS and CloudFlare DNS', () => {
   })
   
   it('should query google.com and return answers', async () => {
+    mockInstance.question[0].name = 'google.co.uk'; // Changes domain to avoid http code 405
     const msg = Buffer.alloc(MAX_UDP_PACKET_SIZE);
     Packet.write(msg, mockInstance);
     const raw = await client.query(msg);
