@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 import { Agent } from "https";
-import * as tls from 'tls';
+import { connect, TLSSocket } from 'tls';
+import { promisify } from "util";
 import { BaseInjection } from "./interceptor/injections/base";
 import { Logger } from "./util/logger";
 
@@ -31,9 +32,11 @@ export interface DNSQueryPromiseMapper {
 }
 
 export class DNSQuery {
+  public isTLSReady: boolean = false;
+  public isClosing: boolean = false;
+  public isConnecting: boolean = false;
   protected httpClient?: AxiosInstance;
-  protected tlsClient?: tls.TLSSocket;
-  protected isTLSReady: boolean = false;
+  protected tlsClient?: TLSSocket;
   protected readonly tlsPromises: Map<number, DNSQueryPromiseMapper> = new Map();
   protected readonly tlsQueue: ({data: Uint8Array}&DNSQueryPromiseMapper)[] = [];
   protected readonly logger = new Logger({ prefix: 'DNS QUERY' });
@@ -56,7 +59,7 @@ export class DNSQuery {
     }
 
     if (options.queryMethod === DNSQueryMethod.DNS_OVER_TLS) {
-      this.connectTLS();
+      this.createTLSClient();
     }
   }
 
@@ -71,7 +74,22 @@ export class DNSQuery {
     }
   }
 
-  public async dohQuery(msg: Uint8Array): Promise<any> {
+  public close(): Promise<void> {
+    return new Promise((resolve) => {
+      this.isClosing = true;
+      if (this.options.queryMethod === DNSQueryMethod.DNS_OVER_TLS && this.tlsClient && this.isTLSReady) {
+        this.tlsClient?.destroy();
+        this.tlsClient.removeAllListeners();
+        this.tlsClient.unpipe();
+        this.tlsClient.unref();
+        this.tlsClient?.end(() => {
+          resolve();
+        })
+      }
+    });
+  }
+
+  protected async dohQuery(msg: Uint8Array): Promise<any> {
     if (this.options.queryMethod !== DNSQueryMethod.DNS_OVER_HTTPS || !this.httpClient) {
       throw new Error('Calling DNS Over HTTPS with a instance of DNS-over-TLS configuration');
     }
@@ -89,7 +107,7 @@ export class DNSQuery {
     return response.data;
   }
 
-  public async dotQuery(msg: Uint8Array): Promise<Uint8Array> {
+  protected async dotQuery(msg: Uint8Array): Promise<Uint8Array> {
     const transactionId = Buffer.from(msg).readUInt16BE(0);
     return new Promise<Uint8Array>((resolve, reject) => {
       if (this.options.queryMethod !== DNSQueryMethod.DNS_OVER_TLS || !this.tlsClient) {
@@ -121,33 +139,40 @@ export class DNSQuery {
     });
   }
 
-  private connectTLS(): void {
-    this.tlsClient = tls.connect({
+  private createTLSClient(): void {
+    if (this.isConnecting) return; // Dont try to connect if it's already connecting
+
+    this.isConnecting = true;
+    this.tlsClient = connect({
       host: this.options.forwardServer,
       port: DEFAULT_DNS_TLS_PORT,
+    }, () => {
+      this.isTLSReady = true;
+      this.isConnecting = false;
+      this.logger.log('DNS-Over-TLS - Established connection with DNS Server')
+
+      this.reprocessTLSQueue();
     });
 
     this.tlsClient.setKeepAlive(true);
 
     this.tlsClient.on('data', this.onTLSData.bind(this));
-    this.tlsClient.on('secureConnect', () => {
-      this.isTLSReady = true;
-      this.logger.log('DNS-Over-TLS - Established connection with DNS Server')
+    this.tlsClient.on('end', this.onTLSClose.bind(this));
+  }
 
-      if (this.tlsQueue.length > 0) {
-        const queued = this.tlsQueue.splice(this.tlsQueue.length);
-        this.logger.log('DNS-Over-TLS - Sending', queued.length, 'queries in queue');
-        Promise.all(
-          queued.map(promise => this.dotQuery(promise.data).then(promise.resolve).catch(promise.reject))
-        );
-      }
-      
-    });
-    this.tlsClient.on('close', this.onTLSClose.bind(this));
+  private async reprocessTLSQueue(): Promise<void> {
+    if (this.tlsQueue.length > 0) {
+      const queued = this.tlsQueue.splice(0);
+      this.logger.log('DNS-Over-TLS - Sending', queued.length, 'queries in queue');
+      await Promise.all(
+        queued.map(promise => this.dotQuery(promise.data).then(promise.resolve).catch(promise.reject))
+      );
+    }
   }
 
   private onTLSClose(): void {
     this.isTLSReady = false;
+    this.isConnecting = false;
     this.logger.log('DNS-Over-TLS - Connection closed. Reconnecting...');
 
     this.tlsPromises.forEach((promise, key) => {
@@ -156,7 +181,9 @@ export class DNSQuery {
       this.tlsPromises.delete(key);
     });
 
-    this.connectTLS();
+    if (!this.isClosing) {
+      this.createTLSClient();
+    }
   }
 
   private async onTLSData(buffer: Buffer): Promise<void> {
