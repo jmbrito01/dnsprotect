@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { DNSUDPInterceptorOptions } from "../interceptor/udp";
+import { DNSUDPInterceptorOptions } from "../interceptor/interceptor";
 import dot from 'dot-object';
 import { DNSQueryMethod } from "../query";
 

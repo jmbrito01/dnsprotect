@@ -1,7 +1,7 @@
 import { CommandLineAction, CommandLineFlagParameter, CommandLineIntegerParameter, CommandLineStringParameter } from "@rushstack/ts-command-line";
 import { writeFileSync } from "fs";
 import { join } from "path";
-import { DEFAULT_UDP_PORT, DNSUDPInterceptor, DNSUDPInterceptorInjections } from "../../interceptor/udp";
+import { DEFAULT_UDP_PORT, DNSUDPInterceptor, DNSUDPInterceptorInjections } from "../../interceptor/interceptor";
 import { ConfigLoader } from "../../util/config-loader";
 import { Logger } from "../../util/logger";
 import inquirer, { Answers, Question } from 'inquirer';

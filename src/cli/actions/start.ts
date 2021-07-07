@@ -1,5 +1,5 @@
 import { CommandLineAction, CommandLineFlagParameter, CommandLineIntegerParameter, CommandLineStringParameter } from "@rushstack/ts-command-line";
-import { DEFAULT_UDP_PORT, DNSUDPInterceptor } from "../../interceptor/udp";
+import { DEFAULT_UDP_PORT, DNSUDPInterceptor } from "../../interceptor/interceptor";
 import { ConfigLoader } from "../../util/config-loader";
 
 export class StartCommandAction extends CommandLineAction {

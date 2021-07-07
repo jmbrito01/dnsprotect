@@ -3,7 +3,7 @@ import { RandomUtil } from "../../src/util/random";
 import * as mock from './query.mock.json';
 //@ts-ignore
 import Packet from 'native-dns-packet';
-import { MAX_UDP_PACKET_SIZE } from "../../src/interceptor/udp";
+import { MAX_UDP_PACKET_SIZE } from "../../src/interceptor/interceptor";
 
 const CLOUDFLARE_DNS_SERVER = '1.1.1.1';
 let client: DNSQuery;

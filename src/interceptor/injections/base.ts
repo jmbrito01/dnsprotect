@@ -1,6 +1,6 @@
 //@ts-ignore
 import Packet from 'native-dns-packet';
-import { MAX_UDP_PACKET_SIZE } from '../udp';
+import { MAX_UDP_PACKET_SIZE } from '../interceptor';
 
 export enum BaseInjectionPhase {
   BEFORE_QUERY = 'before-query',

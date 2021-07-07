@@ -1,5 +1,5 @@
 import { Resolver } from "dns";
-import { DNSUDPInterceptor } from "../../src/interceptor/udp";
+import { DNSUDPInterceptor } from "../../src/interceptor/interceptor";
 import { DNSQueryMethod } from "../../src/query";
 import { TimerUtil } from "../../src/util/timer";
 
