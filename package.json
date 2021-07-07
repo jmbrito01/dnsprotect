@@ -4,8 +4,9 @@
   "main": "./lib/cli/bin.js",
   "license": "MIT",
   "scripts": {
-    "cli": "yarn ts-node ./src/cli/bin.ts",
-    "start": "yarn ts-node ./src/cli/bin.ts start",
+    "init": "husky install",
+    "cli": "ts-node ./src/cli/bin.ts",
+    "start": "ts-node ./src/cli/bin.ts start",
     "test": "jest"
   },
   "dependencies": {
