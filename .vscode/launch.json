@@ -1,0 +1,62 @@
+{
+  "configurations": [
+		{
+			"name": "[DEBUG] CLI Start",
+			"type": "node",
+			"request": "launch",
+			"args": [
+				"${workspaceRoot}/src/cli/bin.ts", 
+				"start",
+				"-c",
+				"./testconfig.json"
+			],
+			"runtimeArgs": ["-r", "ts-node/register"],
+			"cwd": "${workspaceRoot}",
+			"protocol": "inspector",
+			"sourceMaps": true,
+			"resolveSourceMapLocations": [
+				"${workspaceFolder}/**",
+				"!**/node_modules/**"
+			],
+			"internalConsoleOptions": "openOnSessionStart",
+			"console": "integratedTerminal",
+			"env": {
+				"TS_NODE_IGNORE": "false",
+				"LOG_LEVEL": "debug",
+			}
+		},
+		{
+			"name": "[DEBUG] CLI Setup",
+			"type": "node",
+			"request": "launch",
+			"args": [
+				"${workspaceRoot}/src/cli/bin.ts", 
+				"setup",
+				"-o",
+				"./testconfig.json"
+			],
+			"runtimeArgs": ["-r", "ts-node/register"],
+			"cwd": "${workspaceRoot}",
+			"protocol": "inspector",
+			"sourceMaps": true,
+			"resolveSourceMapLocations": [
+				"${workspaceFolder}/**",
+				"!**/node_modules/**"
+			],
+			"internalConsoleOptions": "openOnSessionStart",
+			"console": "integratedTerminal",
+			"env": {
+				"TS_NODE_IGNORE": "false",
+				"LOG_LEVEL": "debug",
+			}
+		},
+		{
+			"name": "Debug Tests",
+			"type": "node",
+			"request": "launch",
+			"runtimeArgs": ["--inspect-brk", "${workspaceRoot}/node_modules/.bin/jest", "--runInBand", "--coverage", "false"],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen"
+		}
+  ]
+}
