@@ -9,7 +9,10 @@ export const DEFAULT_INTERCEPTOR_CONFIG: DNSUDPInterceptorOptions = {
   queryMethod: DNSQueryMethod.DNS_OVER_HTTPS,
   injections: {
     domainBlackList: false,
+    domainWhiteList: false,
+    dnsOverride: false,
     redis: false,
+
   }
 }
 
