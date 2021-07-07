@@ -62,12 +62,20 @@ export class DNSUDPInterceptor {
     this.loadInjections();
   }
 
-  public bindUDP(): void {
-    this.server.bind(this.options.port)
+  public bind(): Promise<void> {
+    return new Promise((resolve) => {
+      this.server.bind(this.options.port, () => resolve());
+    });
   }
 
-  public unbindUDP(): void {
-    this.server.close();
+  public unbind(): Promise<void> {
+    return new Promise((resolve) => {
+      this.server.close(() => {
+        this.server.removeAllListeners();
+        this.server.unref();
+        resolve();
+      });
+    });
   }
 
   private loadInjections(): void {

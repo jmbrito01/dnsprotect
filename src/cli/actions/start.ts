@@ -20,7 +20,7 @@ export class StartCommandAction extends CommandLineAction {
 
     const server = new DNSUDPInterceptor(config.getFull());
 
-    server.bindUDP();
+    await server.bind();
   }
 
   public onDefineParameters(): void {
