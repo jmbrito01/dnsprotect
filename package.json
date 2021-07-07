@@ -4,7 +4,7 @@
   "main": "./lib/cli/bin.js",
   "license": "MIT",
   "scripts": {
-    "init": "husky install",
+    "setup": "husky install",
     "cli": "ts-node ./src/cli/bin.ts",
     "start": "ts-node ./src/cli/bin.ts start",
     "test": "jest"
