@@ -25,15 +25,22 @@ Now that you have everything running, you can simply set your DNS Server from yo
 - Force DoT (Force DNS-over-TLS in all DNS queries)
 - Domain Black List (used for adblock and no tracking)
 - Domain Whitelist (allow only selected domains to be reached and block all else)
+- FUTURE: DNSSEC
+- FUTURE: Handshake.org DNS Name Resolution
+- FUTURE: Accept DoH and DoT requests
+- FUTURE: DNS-over-QUIC 
+- FUTURE: DNS-over-DTLS
+- FUTURE: DNS-over-HTTPS using a QUIC transport
+- FUTURE: DNSCrypt and Anonymized DNSCrypt
+- FUTURE DNS-over-blockchain (https://ens.domains/)
+- FUTURE: DNS over Tor
 
 **Performance**
 - Query Cache (Use Redis to cache DNS query results respecting TTLs for fast dns resolutions)
+- FUTURE: Multi-threading
+- FUTURE: Multiple forward servers (DNS Server Load Balancing)
+- 
 
 **Development**
 - DNS Overrides (Override DNS resolutions for you selected IPs)
-
-To be implemented in the future:
-- NEXT: Monitoring
-- NEXT: DNSSEC
-- 
-
+- FUTURE: Monitoring (Prometheus)
