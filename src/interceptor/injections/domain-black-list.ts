@@ -12,7 +12,7 @@ export interface BlackListInjectionOptions {
   lists: string[];
 }
 
-export class BlackListInjection extends BaseInjection {
+export class DomainBlackListInjection extends BaseInjection {
   protected blackList: BlackListList = {};
   protected logger = new Logger({ prefix: 'BLACKLIST' });
 

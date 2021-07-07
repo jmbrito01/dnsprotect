@@ -23,11 +23,12 @@ Now that you have everything running, you can simply set your DNS Server from yo
 - Force DoT (DNS-over-TLS)
 - Blacklist (used for adblock and no tracking)
   - Block Domains
+- Whitelist
 - Query Cache (respecting TTLs)
+- DNS Overrides
 
 To be implemented in the future:
-- NEXT: Whitelist
 - NEXT: Monitoring
-- NEXT: DNS Override
 - NEXT: DNSSEC
+- 
 

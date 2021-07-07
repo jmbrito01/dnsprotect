@@ -50,8 +50,10 @@ export class SetupCommandAction extends CommandLineAction {
 
   private async setupInjections(injections: string[]): Promise<DNSUDPInterceptorInjections> {
     const injectionResult: DNSUDPInterceptorInjections = {
-      blackList: false,
+      domainBlackList: false,
       redis: false,
+      domainWhiteList: false,
+      dnsOverride: false,
     }
     if (injections.indexOf('blackList') !== -1) {
       const lists: string[] = [];
@@ -61,7 +63,23 @@ export class SetupCommandAction extends CommandLineAction {
         lists.push(response.list);
       } while (response.newList)
 
-      injectionResult.blackList = {
+      injectionResult.domainBlackList = {
+        lists,
+      }
+    }
+
+    if (injections.indexOf('whiteList') !== -1) {
+      if (injections.indexOf('blackList') !== -1) {
+        this.logger.warn('Whitelist and Blacklist are ON. Thats not recommended and could cause conflicts if not properly set. Please consider what youre doing.');
+      }
+      const lists: string[] = [];
+      let response;
+      do {
+        response = await inquirer.prompt(WHITELIST_SETUP);
+        lists.push(response.list);
+      } while (response.newList)
+
+      injectionResult.domainWhiteList = {
         lists,
       }
     }
@@ -123,6 +141,7 @@ const INQUIRER_QUESTIONS: inquirer.QuestionCollection[] = [
     message: 'Which injections do you wish to enable?',
     choices: [
       { value: 'blackList', name: 'Black List', checked: true },
+      { value: 'whiteList', name: 'White List', checked: false },
       { value: 'redis', name: 'Redis Cache', checked: true },
       { value: 'dnsOverride', name: 'DNS Override', checked: true },
     ]
@@ -145,6 +164,25 @@ const BLACKLIST_SETUP: inquirer.QuestionCollection[] = [
     name: 'newList',
     message: 'Do you wish to add a new list?',
     prefix: '[BLACKLIST]'
+  }
+]
+
+const WHITELIST_SETUP: inquirer.QuestionCollection[] = [
+  {
+    type: 'input',
+    name: 'list',
+    message: 'Type a new path for a whitelist:',
+    prefix: '[WHITELIST]',
+    validate(listName) {
+      //TODO: Validate if this list is OK
+      return true;
+    },
+  },
+  {
+    type: 'confirm',
+    name: 'newList',
+    message: 'Do you wish to add a new list?',
+    prefix: '[WHITELIST]'
   }
 ]
 

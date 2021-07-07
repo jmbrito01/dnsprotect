@@ -3,7 +3,7 @@ import { DNSQuery, DNSQueryMethod } from '../query';
 import { BaseInjection, BaseInjectionPhase } from './injections/base';
 //@ts-ignore
 import Packet from 'native-dns-packet';
-import { BlackListInjection, BlackListInjectionOptions } from './injections/black-list';
+import { DomainBlackListInjection, BlackListInjectionOptions } from './injections/domain-black-list';
 import { Logger } from '../util/logger';
 import { RetryUtil } from '../util/retry-util';
 import Redis from 'redis';
@@ -12,13 +12,15 @@ import { SaveCacheInjection } from './injections/redis-cache/save-cache';
 import { LoadCacheInjection } from './injections/redis-cache/load-cache';
 import chalk from 'chalk';
 import { DNSOverrideInjection, DNSOverrideInjectionOptions } from './injections/dns-override';
+import { DomainWhiteListInjection, WhiteListInjectionOptions } from './injections/domain-white-list';
 
 export const DEFAULT_UDP_PORT = 53;
 export const MAX_UDP_PACKET_SIZE = 512;
 export const DEFAULT_DNS_QUERY_METHOD = DNSQueryMethod.DNS_OVER_HTTPS;
 
 export interface DNSUDPInterceptorInjections {
-  blackList?: false|BlackListInjectionOptions;
+  domainBlackList?: false|BlackListInjectionOptions;
+  domainWhiteList?: false|WhiteListInjectionOptions;
   redis?: false|RedisClientInjectionOptions;
   dnsOverride?: false|DNSOverrideInjectionOptions;
 }
@@ -69,8 +71,12 @@ export class DNSUDPInterceptor {
   }
 
   private loadInjections(): void {
-    if (this.options.injections.blackList) {
-      this.injections.push(new BlackListInjection(this.options.injections.blackList));
+    if (this.options.injections.domainBlackList) {
+      this.injections.push(new DomainBlackListInjection(this.options.injections.domainBlackList));
+    }
+
+    if (this.options.injections.domainWhiteList) {
+      this.injections.push(new DomainWhiteListInjection(this.options.injections.domainWhiteList));
     }
 
     if (this.options.injections.redis) {
