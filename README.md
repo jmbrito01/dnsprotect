@@ -37,9 +37,11 @@ Now that you have everything running, you can simply set your DNS Server from yo
 
 **Performance**
 - Query Cache (Use Redis to cache DNS query results respecting TTLs for fast dns resolutions)
-- Multi-threading receiving server (defaults to cpu count)
-- FUTURE: Multiple forward servers (DNS Server Load Balancing)
-- 
+- Multi-threading for receiving requests
+- Multiple forward servers (Forward Load Balancing)
+  - Random Balance Strategy
+  - Round Robin Strategy
+  - FUTURE: Sticky Sessions
 
 **Development**
 - DNS Overrides (Override DNS resolutions for you selected IPs)

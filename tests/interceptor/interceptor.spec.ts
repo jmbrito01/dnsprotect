@@ -1,6 +1,6 @@
 import { Resolver } from "dns";
 import { DEFAULT_UDP_PORT, DNSUDPInterceptor } from "../../src/interceptor/interceptor";
-import { DNSQueryMethod } from "../../src/query";
+import { DNSQueryMethod } from "../../src/query/query";
 import { TimerUtil } from "../../src/util/timer";
 
 describe('UDP Interceptor', () => {
@@ -14,7 +14,7 @@ describe('UDP Interceptor', () => {
     client = new DNSUDPInterceptor({
       port,
       forwardRetries: 1,
-      forwardServer: '1.0.0.1',
+      forwardServers: ['1.0.0.1'],
       queryMethod: DNSQueryMethod.DNS_OVER_TLS,
       injections: {
         redis: false,

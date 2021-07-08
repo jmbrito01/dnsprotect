@@ -2,7 +2,7 @@ jest.mock('redis', () => jest.requireActual('redis-mock'));
 
 import { Resolver } from "dns";
 import { DNSUDPInterceptor } from "../../../src/interceptor/interceptor";
-import { DNSQueryMethod } from "../../../src/query";
+import { DNSQueryMethod } from "../../../src/query/query";
 import redis, { RedisClient } from 'redis-mock';
 import { REDIS_CLIENT_KEY_PREFIX } from "../../../src/interceptor/injections/redis-cache";
 import { DEFAULT_UDP_PORT } from "../../../src/interceptor/interceptor";
@@ -28,7 +28,7 @@ describe('Redis Cache Interceptor', () => {
       client = new DNSUDPInterceptor({
         port,
         forwardRetries: 1,
-        forwardServer: '1.0.0.1',
+        forwardServers: ['1.0.0.1'],
         queryMethod: DNSQueryMethod.DNS_OVER_TLS,
         injections: {
           redis: {
@@ -97,7 +97,7 @@ describe('Redis Cache Interceptor', () => {
       client = new DNSUDPInterceptor({
         port,
         forwardRetries: 1,
-        forwardServer: '1.0.0.1',
+        forwardServers: ['1.0.0.1'],
         queryMethod: DNSQueryMethod.DNS_OVER_TLS,
         injections: {
           redis: {

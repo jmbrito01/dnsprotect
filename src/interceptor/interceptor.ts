@@ -1,5 +1,5 @@
 import dgram from 'dgram';
-import { DNSQuery, DNSQueryMethod } from '../query';
+import { DNSQuery, DNSQueryMethod } from '../query/query';
 import { BaseInjection, BaseInjectionPhase } from './injections/base';
 //@ts-ignore
 import Packet from 'native-dns-packet';
@@ -13,6 +13,8 @@ import { LoadCacheInjection } from './injections/redis-cache/load-cache';
 import chalk from 'chalk';
 import { DNSOverrideInjection, DNSOverrideInjectionOptions } from './injections/dns-override';
 import { DomainWhiteListInjection, WhiteListInjectionOptions } from './injections/domain-white-list';
+import { LoadBalancingStrategy } from '../util/load-balancing';
+import { DNSQueryCluster } from '../query/query-cluster';
 
 export const DEFAULT_UDP_PORT = 53;
 export const MAX_UDP_PACKET_SIZE = 512;
@@ -26,8 +28,9 @@ export interface DNSUDPInterceptorInjections {
 }
 
 export interface DNSUDPInterceptorOptions {
-  forwardServer: string;
+  forwardServers: string[];
   forwardRetries: number;
+  loadBalancingStrategy?: LoadBalancingStrategy;
   queryMethod?: DNSQueryMethod;
   port?: number;
   injections: DNSUDPInterceptorInjections;
@@ -35,7 +38,7 @@ export interface DNSUDPInterceptorOptions {
 
 export class DNSUDPInterceptor {
   protected readonly server = dgram.createSocket('udp4');
-  protected query!: DNSQuery;
+  protected query!: DNSQueryCluster;
   protected injections: BaseInjection[] = [];
   protected readonly logger = new Logger({ prefix: 'UDP INTERCEPTOR'})
 
@@ -50,12 +53,17 @@ export class DNSUDPInterceptor {
       this.options.queryMethod = DEFAULT_DNS_QUERY_METHOD;
     }
 
+    if (!this.options.loadBalancingStrategy) {
+      this.options.loadBalancingStrategy = LoadBalancingStrategy.RANDOM_BALANCE;
+    }
+
     this.server.on('listening', this.onUDPListening.bind(this));
     this.server.on('error', this.onUDPError.bind(this));
     this.server.on('message', this.onUDPMessage.bind(this));
 
-    this.query = new DNSQuery({
-      forwardServer: this.options.forwardServer,
+    this.query = new DNSQueryCluster({
+      forwardServers: this.options.forwardServers,
+      loadBalancingStrategy: this.options.loadBalancingStrategy,
       queryMethod: this.options.queryMethod,
     });
 

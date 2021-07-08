@@ -1,13 +1,14 @@
-import { CommandLineAction, CommandLineFlagParameter, CommandLineIntegerParameter, CommandLineStringParameter } from "@rushstack/ts-command-line";
+import { CommandLineAction, CommandLineStringParameter } from "@rushstack/ts-command-line";
 import { writeFileSync } from "fs";
 import { join } from "path";
-import { DEFAULT_UDP_PORT, DNSUDPInterceptor, DNSUDPInterceptorInjections } from "../../interceptor/interceptor";
+import { DNSUDPInterceptorInjections } from "../../interceptor/interceptor";
 import { ConfigLoader } from "../../util/config-loader";
 import { Logger } from "../../util/logger";
 import inquirer, { Answers, Question } from 'inquirer';
 import { DEFAULT_EMPTY_TTL_CACHE, RedisClientInjectionOptions } from "../../interceptor/injections/redis-cache";
-import { DNSQueryMethod } from "../../query";
+import { DNSQueryMethod } from "../../query/query";
 import { DNSOverrideMapper } from "../../interceptor/injections/dns-override";
+import { LoadBalancingStrategy } from "../../util/load-balancing";
 
 export class SetupCommandAction extends CommandLineAction {
   private outputFile!: CommandLineStringParameter;
@@ -29,6 +30,14 @@ export class SetupCommandAction extends CommandLineAction {
     const config = ConfigLoader.initialize({});
     this.logger.info("Let's start asking you some question...");
     let answers = await inquirer.prompt(INQUIRER_QUESTIONS);
+
+    if (answers.forwardServersCustom) {
+      answers.forwardServers = [
+        ...answers.forwardServers.filter((each: string) => each !== 'other'),
+        ...answers.forwardServersCustom.split(','),
+      ]
+
+    }
     
     answers.injections = await this.setupInjections(answers.injections);
 
@@ -108,16 +117,55 @@ export class SetupCommandAction extends CommandLineAction {
 
 const INQUIRER_QUESTIONS: inquirer.QuestionCollection[] = [
   {
+    type: 'checkbox',
+    name: 'forwardServers',
+    message: 'DNS Servers to forward all queries to:',
+    choices: [
+      { value: '1.1.1.1', name: 'CloudFlare DNS(1.1.1.1)' },
+      { value: '1.0.0.1', name: 'Cloudflare DNS(1.0.0.1)' },
+      { value: '8.8.8.8', name: 'Google DNS(8.8.8.8)'},
+      { value: 'other', name: 'Other' }
+    ],
+    validate(input) {
+      if (input.length === 0) {
+        return `It's required to select at least one forward server`
+      }
+
+      return true;
+    }
+  },
+  {
     type: 'input',
-    name: 'forwardServer',
-    message: 'DNS Server to forward all queries to (Defaults to CloudFlare DNS):',
-    default: '1.0.0.1',
+    name: 'forwardServersCustom',
+    message: 'Enter your custom forward servers(comma separated):',
+    when: (values) => values.forwardServers.indexOf('other') !== -1,
+  },
+  {
+    type: 'list',
+    name: 'loadBalancingStrategy',
+    message: 'Which load balancing strategy should we use with the forward servers?',
+    choices: [
+      { value: LoadBalancingStrategy.RANDOM_BALANCE, name: 'Random Balance (Default)' },
+      { value: LoadBalancingStrategy.ROUND_ROBIN, name: 'Round Robin' },
+    ],
+    when(answers) {
+      return (
+        answers.forwardServers.length > 1 || 
+        ( answers.forwardServersCustom && answers.forwardServersCustom.split(',').length > 1  )
+      );
+    }
   },
   {
     type: 'number',
     name: 'forwardRetries',
     message: 'How many times should we try to get a query before failing?',
     default: 1,
+    validate(input) {
+      if (input == 0) {
+        return 'The minimum allowed value is 1';
+      }
+      return true;
+    }
   },
   {
     type: 'number',

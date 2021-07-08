@@ -1,10 +1,10 @@
 import { readFileSync } from "fs";
 import { DNSUDPInterceptorOptions } from "../interceptor/interceptor";
 import dot from 'dot-object';
-import { DNSQueryMethod } from "../query";
+import { DNSQueryMethod } from "../query/query";
 
 export const DEFAULT_INTERCEPTOR_CONFIG: DNSUDPInterceptorOptions = {
-  forwardServer: '1.0.0.1',
+  forwardServers: [],
   forwardRetries: 1,
   queryMethod: DNSQueryMethod.DNS_OVER_HTTPS,
   injections: {
