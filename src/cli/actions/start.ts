@@ -1,9 +1,17 @@
 import { CommandLineAction, CommandLineFlagParameter, CommandLineIntegerParameter, CommandLineStringParameter } from "@rushstack/ts-command-line";
-import { DEFAULT_UDP_PORT, DNSUDPInterceptor } from "../../interceptor/udp";
+import { DEFAULT_UDP_PORT, DNSUDPInterceptor } from "../../interceptor/interceptor";
 import { ConfigLoader } from "../../util/config-loader";
-
+import cluster, { Worker } from 'cluster';
+import os from 'os';
+import { Logger } from "../../util/logger";
 export class StartCommandAction extends CommandLineAction {
   private _config!: CommandLineStringParameter;
+  private _workerCount!: CommandLineIntegerParameter;
+  private readonly workers: Map<number, Worker> = new Map();
+  private server!: DNSUDPInterceptor;
+  private isExiting: boolean = false;
+
+  protected logger = new Logger({ prefix: 'START ACTION' });
 
   constructor() {
     super({
@@ -18,9 +26,26 @@ export class StartCommandAction extends CommandLineAction {
       fileName: this._config.value,
     });
 
-    const server = new DNSUDPInterceptor(config.getFull());
+    if (cluster.isMaster && this._workerCount.value && this._workerCount.value > 1) {
+      this.logger.log('Starting master process:', process.pid);
 
-    await server.bind();
+      process.on('SIGINT', () => this.onMasterRequestToExit());
+      cluster.on('exit', (worker, code, signal) => this.onWorkerExit(worker, code, signal));
+
+      if (!this._workerCount.value) {
+        throw new Error('Required workerCount to start');
+      }
+      for (let i = 0;i < this._workerCount.value;i++) {
+        this.createWorkerProcess();
+      }
+
+    } else {
+      this.logger.log('Starting worker process:', process.pid);
+      this.server = new DNSUDPInterceptor(config.getFull());
+      await this.server.bind();
+
+      process.on('message', msg => this.onWorkerMessage(msg));
+    }
   }
 
   public onDefineParameters(): void {
@@ -31,5 +56,50 @@ export class StartCommandAction extends CommandLineAction {
       required: false,
       argumentName: 'CONFIG',
     });
+
+    this._workerCount = this.defineIntegerParameter({
+      parameterLongName: '--worker-count',
+      parameterShortName: '-w',
+      description: 'Number of process workers to be run',
+      argumentName: 'WORKER_COUNT',
+      defaultValue: os.cpus().length,
+    })
+  }
+
+  private onMasterRequestToExit(): void {
+    this.isExiting = true;
+
+    this.workers.forEach((worker) => {
+      this.logger.log('Sending exit command to worker', worker.process.pid);
+      worker.send({cmd: 'STOP'});
+    });
+  }
+
+  private onWorkerExit(worker: Worker, code: number, signal: string): void {
+    this.logger.info('Worker', worker.process.pid, 'died with',  signal);
+    this.workers.delete(worker.id);
+    if (this._workerCount.value && this._workerCount.value > this.workers.size && !this.isExiting && code !== 1) {
+      const delta = this._workerCount.value - this.workers.size;
+      this.logger.log('Worker count is below minimum(', this._workerCount.value, ') creating', delta, 'more.');
+      this.createWorkerProcess();
+    } else if (this.workers.size === 0) {
+      // No more workers, time to exit master
+      this.logger.log('No more workers running, exiting main process...');
+      process.exit(0);
+    }
+  }
+
+  private async onWorkerMessage(msg: any): Promise<void> {
+    if (msg.cmd === 'STOP') {
+      this.logger.log('Worker', process.pid, 'is stopping because master process requested.');
+      await this.server.unbind();
+      process.exit(1);
+    }
+  }
+
+  private createWorkerProcess(): void {
+    this.logger.log('Creating new worker process');
+    const worker = cluster.fork();
+    this.workers.set(worker.id, worker);
   }
 }

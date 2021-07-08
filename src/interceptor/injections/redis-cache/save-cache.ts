@@ -4,7 +4,7 @@ import { Logger } from "../../../util/logger";
 import { BaseInjection, BaseInjectionExecutionResult, BaseInjectionPhase } from "../base";
 //@ts-ignore
 import Packet from 'native-dns-packet';
-import { MAX_UDP_PACKET_SIZE } from "../../udp";
+import { MAX_UDP_PACKET_SIZE } from "../../interceptor";
 
 export class SaveCacheInjection extends BaseInjection {
   protected client!: Redis.RedisClient;
