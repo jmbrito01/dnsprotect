@@ -26,7 +26,7 @@ describe('UDP Interceptor', () => {
     await client.bind();
 
     resolver = new Resolver();
-    resolver.setServers(['127.0.0.1']);
+    resolver.setServers([`127.0.0.1:${port}`]);
   });
 
   it('should forward new dns queries', async () => {
