@@ -1,16 +1,18 @@
 import { Resolver } from "dns";
 import { join } from "path";
-import { DNSUDPInterceptor } from "../../../src/interceptor/interceptor";
+import { DEFAULT_UDP_PORT, DNSUDPInterceptor } from "../../../src/interceptor/interceptor";
 import { DNSQueryMethod } from "../../../src/query";
 
 describe('Whitelist Interceptor', () => {
   let client: DNSUDPInterceptor;
   let resolver: Resolver;
-
+  const port = process.env.PORT ? parseInt(process.env.PORT) : DEFAULT_UDP_PORT;
+  
   jest.setTimeout(10000);
 
   beforeAll(async () => {
     client = new DNSUDPInterceptor({
+      port,
       forwardRetries: 1,
       forwardServer: '1.0.0.1',
       queryMethod: DNSQueryMethod.DNS_OVER_TLS,
@@ -28,7 +30,7 @@ describe('Whitelist Interceptor', () => {
     await client.bind();
 
     resolver = new Resolver();
-    resolver.setServers(['127.0.0.1']);
+    resolver.setServers([`127.0.0.1:${port}`]);
   });
 
   it('should pass through with whitelisted domains', async () => {
