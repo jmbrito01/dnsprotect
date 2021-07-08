@@ -32,4 +32,4 @@ jobs:
       - name: Run automated tests
         run: |
           sleep 5
-          yarn test --ci
+          PORT=8000 yarn test --ci
