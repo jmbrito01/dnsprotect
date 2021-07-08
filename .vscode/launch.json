@@ -1,14 +1,43 @@
 {
   "configurations": [
 		{
-			"name": "[DEBUG] CLI Start",
+			"name": "[DEBUG] CLI Start (Single)",
 			"type": "node",
 			"request": "launch",
 			"args": [
 				"${workspaceRoot}/src/cli/bin.ts", 
 				"start",
 				"-c",
-				"./testconfig.json"
+				"./testconfig.json",
+				"-w",
+				"1"
+			],
+			"runtimeArgs": ["-r", "ts-node/register"],
+			"cwd": "${workspaceRoot}",
+			"protocol": "inspector",
+			"sourceMaps": true,
+			"resolveSourceMapLocations": [
+				"${workspaceFolder}/**",
+				"!**/node_modules/**"
+			],
+			"internalConsoleOptions": "openOnSessionStart",
+			"console": "integratedTerminal",
+			"env": {
+				"TS_NODE_IGNORE": "false",
+				"LOG_LEVEL": "debug",
+			}
+		},
+		{
+			"name": "[DEBUG] CLI Start (Cluster)",
+			"type": "node",
+			"request": "launch",
+			"args": [
+				"${workspaceRoot}/src/cli/bin.ts", 
+				"start",
+				"-c",
+				"./testconfig.json",
+				"-w",
+				"2"
 			],
 			"runtimeArgs": ["-r", "ts-node/register"],
 			"cwd": "${workspaceRoot}",
