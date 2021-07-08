@@ -1,6 +1,6 @@
 import { Resolver } from "dns";
 import { join } from "path";
-import { DNSUDPInterceptor } from "../../../src/interceptor/udp";
+import { DNSUDPInterceptor } from "../../../src/interceptor/interceptor";
 import { DNSQueryMethod } from "../../../src/query";
 
 describe('Whitelist Interceptor', () => {
