@@ -14,7 +14,6 @@
     "axios": "^0.21.1",
     "chalk": "^4.1.1",
     "dot-object": "^2.1.4",
-    "fastify": "^3.18.1",
     "inquirer": "^8.1.1",
     "native-dns-packet": "^0.1.1",
     "redis": "^3.1.2"
