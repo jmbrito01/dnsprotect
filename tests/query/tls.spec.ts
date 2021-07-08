@@ -1,4 +1,4 @@
-import { DNSQuery, DNSQueryMethod } from "../../src/query";
+import { DNSQuery, DNSQueryMethod } from "../../src/query/query";
 import { RandomUtil } from "../../src/util/random";
 import * as mock from './query.mock.json';
 //@ts-ignore

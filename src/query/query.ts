@@ -1,9 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 import { Agent } from "https";
 import { connect, TLSSocket } from 'tls';
-import { promisify } from "util";
-import { BaseInjection } from "./interceptor/injections/base";
-import { Logger } from "./util/logger";
+import { Logger } from "../util/logger";
 
 export const DEFAULT_DNS_TLS_PORT = 853;
 
