@@ -256,7 +256,7 @@ export class DNSPacket {
     remainingSections = authority.buffer;
     sections.authority = authority.records;
 
-    const additional = this.getNextResourceRecord(remainingSections, this.headers.answerCount);
+    const additional = this.getNextResourceRecord(remainingSections, this.headers.additionalResourceRecordCount);
     remainingSections = additional.buffer;
     sections.additional = additional.records;
     return sections;
@@ -285,12 +285,12 @@ export class DNSPacket {
   private getNextResourceRecord(buffer: Buffer, count: number = 1): { buffer: Buffer, records: DNSPacketResourceRecord[] } {
     let newBuffer = Buffer.from(buffer);
     const sections: DNSPacketResourceRecord[] = [];
-    for (let i = 0; i <= count;i++) {
+    for (let i = 0; i < count;i++) {
       const { label: name, size } = this.readStringLabel(newBuffer, 0);
       newBuffer = newBuffer.slice(size); // String null terminated
 
       if (newBuffer.length < 10) {
-        this.logger.warn('Buffer is smaller than it should. Length is', newBuffer.length)
+        this.logger.warn('Buffer is smaller than it should. Length is', newBuffer.length, '')
         break;
       }
 
