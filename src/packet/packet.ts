@@ -1,3 +1,5 @@
+import { Logger } from "../util/logger";
+
 export const DNS_PACKET_HEADER_SIZE = 2 * 6; // 6 16bit ints
 
 export enum DNSPacketQR {
@@ -97,8 +99,8 @@ export interface DNSPacketAnswerRecord extends DNSPacketResourceRecord {
 export class DNSPacket {
   public headers!: DNSPacketHeaderFlags;
   public sections!: DNSPacketSections;
-
   public buffer!: Buffer;
+  private readonly logger = new Logger({ prefix: 'DNS PACKET' });
 
   constructor(msg: Uint8Array) {
     this.buffer = Buffer.from(msg);
@@ -109,9 +111,17 @@ export class DNSPacket {
 
   public hasQuestionWithDomain(name: string): boolean {
     return (
-      this.sections.questions.length > 0 && 
+      this.hasQuestions() && 
       this.sections.questions.findIndex(question => question.name === name) !== -1
     );
+  }
+
+  public hasQuestions(): boolean {
+    return this.sections.questions.length > 0;
+  }
+
+  public hasAnswers(): boolean {
+    return this.sections.answers.length > 0;
   }
 
   public isReply(): boolean {
@@ -275,9 +285,14 @@ export class DNSPacket {
   private getNextResourceRecord(buffer: Buffer, count: number = 1): { buffer: Buffer, records: DNSPacketResourceRecord[] } {
     let newBuffer = Buffer.from(buffer);
     const sections: DNSPacketResourceRecord[] = [];
-    for (let i = 0; i < count;i++) {
+    for (let i = 0; i <= count;i++) {
       const { label: name, size } = this.readStringLabel(newBuffer, 0);
       newBuffer = newBuffer.slice(size); // String null terminated
+
+      if (newBuffer.length < 10) {
+        this.logger.warn('Buffer is smaller than it should. Length is', newBuffer.length)
+        break;
+      }
 
       const rdataSize = newBuffer.readUInt16BE(8);
       const record: DNSPacketResourceRecord = {

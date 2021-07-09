@@ -9,6 +9,7 @@ import Packet from 'native-dns-packet';
 describe('DNSPacket with question packet', () => {
   let request: DNSPacket;
   let query: DNSQuery;
+  jest.setTimeout(10000);
 
   beforeAll(async () => {
     request = new DNSPacket(Buffer.from(mock.query, 'base64'));
@@ -128,8 +129,11 @@ describe('DNSPacket with answer packet', () => {
     const newResponse = new DNSPacket(responseRaw);
 
     expect(newResponse.getId()).toBe(request.getId());
+    expect(newResponse.sections.questions.length).toBe(request.sections.questions.length);
     expect(newResponse.sections.answers.length).toBe(request.sections.questions.length);
-    
+    expect(newResponse.sections.answers.length).toBe(newResponse.headers.answerCount);
+    expect(newResponse.sections.authority.length).toBe(newResponse.headers.authorityResourceRecordCount);
+    expect(newResponse.sections.additional.length).toBe(newResponse.headers.additionalResourceRecordCount);
     //const answerKey = answer
   });
 });

@@ -1,5 +1,6 @@
 //@ts-ignore
 import Packet from 'native-dns-packet';
+import { DNSPacket } from '../../packet/packet';
 import { MAX_UDP_PACKET_SIZE } from '../interceptor';
 
 export enum BaseInjectionPhase {
@@ -16,9 +17,9 @@ export interface BaseInjectionExecutionResult {
 export abstract class BaseInjection {
   public readonly abstract phase: BaseInjectionPhase;
 
-  public abstract needsExecution(query: any, result?: any): Promise<boolean>;
+  public abstract needsExecution(query: DNSPacket, result?: DNSPacket): Promise<boolean>;
 
-  public abstract onExecute(query: any, result?: any): Promise<BaseInjectionExecutionResult>;
+  public abstract onExecute(query: DNSPacket, result?: DNSPacket): Promise<BaseInjectionExecutionResult>;
 
   public static async executeInjections(injections: BaseInjection[], query: Uint8Array, phase: BaseInjectionPhase, result?: Uint8Array): Promise<BaseInjectionExecutionResult> {
     if (injections.length === 0) {
@@ -27,7 +28,7 @@ export abstract class BaseInjection {
       }
     }
 
-    const request = Packet.parse(query);
+    const request = new DNSPacket(query);
     if (phase === BaseInjectionPhase.BEFORE_QUERY) {
       const promises = injections
         .filter(injection => injection.phase === BaseInjectionPhase.BEFORE_QUERY)
@@ -35,7 +36,7 @@ export abstract class BaseInjection {
           const needsExecution = await injection.needsExecution(request);
 
           if (needsExecution) {
-            return injection.onExecute(request, result);
+            return injection.onExecute(request);
           }
 
           return {
@@ -53,14 +54,17 @@ export abstract class BaseInjection {
       if (!result) {
         throw new Error('Cant execute injections after query with no result');
       }
-      let injectionResponse = Packet.parse(result);
+      const response = new DNSPacket(result);
+      let injectionResponse: BaseInjectionExecutionResult = {
+        halt: false,
+      };
 
       const promises = injections
         .filter(injection => injection.phase === BaseInjectionPhase.BEFORE_RESPONSE)
         .map(async injection => {
           return {
-            needsExecution: await injection.needsExecution(request, injectionResponse),
-            execute: injection.onExecute.bind(injection, request, injectionResponse),
+            needsExecution: await injection.needsExecution(request, response),
+            execute: injection.onExecute.bind(injection, request, response),
           }
         });
       

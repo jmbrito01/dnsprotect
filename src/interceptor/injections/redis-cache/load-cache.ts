@@ -1,9 +1,8 @@
 import Redis from "redis";import { promisify } from "util";
 import { RedisClientInjectionOptions, REDIS_CLIENT_KEY_PREFIX } from ".";
+import { DNSPacket } from "../../../packet/packet";
 import { Logger } from "../../../util/logger";
 import { BaseInjection, BaseInjectionExecutionResult, BaseInjectionPhase } from "../base";
-//@ts-ignore
-import Packet from 'native-dns-packet';
 
 export class LoadCacheInjection extends BaseInjection {
   protected client!: Redis.RedisClient;
@@ -23,8 +22,8 @@ export class LoadCacheInjection extends BaseInjection {
     this.logger.log('Ready to be used.');
   }
 
-  public async needsExecution(query: any): Promise<boolean> {
-    const questions: any[] = query.question;
+  public async needsExecution(query: DNSPacket): Promise<boolean> {
+    const questions: any[] = query.sections.questions;
 
     const keyName = questions.map((a: any) => a.name).join('.');
 
@@ -32,13 +31,13 @@ export class LoadCacheInjection extends BaseInjection {
     return exists;
   }
 
-  public async onExecute(query: any, result: any): Promise<BaseInjectionExecutionResult> {
-    const questions: any[] = query.question;
+  public async onExecute(query: DNSPacket): Promise<BaseInjectionExecutionResult> {
+    const questions: any[] = query.sections.questions;
 
     const keyName = questions.map((a: any) => a.name).join('.');
     const response = await this.getCache(`${REDIS_CLIENT_KEY_PREFIX}${keyName}`);
     
-    response.writeUInt16BE(query.header.id, 0); // Sets the correct transaction id
+    response.writeUInt16BE(query.getId(), 0); // Sets the correct transaction id
 
     // TODO: We should also update the TTL acording to the last time we saved it, or the server can spend a little time with the wrong ip
 

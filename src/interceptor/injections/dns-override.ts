@@ -1,3 +1,4 @@
+import { DNSPacket } from "../../packet/packet";
 import { Logger } from "../../util/logger";
 import { BaseInjection, BaseInjectionExecutionResult, BaseInjectionPhase } from "./base";
 
@@ -23,10 +24,9 @@ export class DNSOverrideInjection extends BaseInjection {
     this.logger.log(`Number of DNS overrides loaded:`, Object.keys(this.options.mappers).length);
   }
 
-  public async needsExecution(query: any, response: any): Promise<boolean> {
-    const questions = response.question || [];
-
-    if (response && questions instanceof Array && questions.length > 0) {
+  public async needsExecution(query: DNSPacket, response: DNSPacket): Promise<boolean> {
+    if (response && response.isReply() && response.hasQuestions()) {
+      const questions = response.sections.questions;
       const found = questions.filter(answer => this.options.mappers[answer.name] !== undefined);
 
       return found.length > 0;
@@ -35,12 +35,12 @@ export class DNSOverrideInjection extends BaseInjection {
     return false;
   }
 
-  public async onExecute(query: any, response: any): Promise<BaseInjectionExecutionResult> {
+  public async onExecute(query: DNSPacket, response: DNSPacket): Promise<BaseInjectionExecutionResult> {
     // If DNS found on mapping, lets change the result address
-    const answers: any[] = response.answer || [];
+    const answers: any[] = response.sections.answers;
     const newResponse = Object.assign({}, response);
 
-    newResponse.answer = answers
+    newResponse.sections.answers = answers
       .filter(answer => this.options.mappers[answer.name] !== undefined)
       .map(answer => {
         const mapper = this.options.mappers[answer.name];
@@ -53,11 +53,11 @@ export class DNSOverrideInjection extends BaseInjection {
         return answer;
       });
 
-    newResponse.answer = newResponse.answer.slice(0, 1);
+    newResponse.sections.answers = newResponse.sections.answers.slice(0, 1);
 
     return {
       halt: false,
-      response: newResponse,
+      response: newResponse.getRaw(),
     };
 }
     
