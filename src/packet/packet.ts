@@ -342,7 +342,7 @@ export class DNSPacket {
         size: 2,
       }
     }
-    while ((partLength = newBuffer.readInt8(0)) > 0) {  
+    while (newBuffer.length > 0 && (partLength = newBuffer.readInt8(0)) > 0) {  
       const name = newBuffer.slice(1, partLength+1).toString();
       names.push(name);
       newBuffer = newBuffer.slice(partLength+1);

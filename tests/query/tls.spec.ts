@@ -5,6 +5,7 @@ import * as mock from './query.mock.json';
 import Packet from 'native-dns-packet';
 import { MAX_UDP_PACKET_SIZE } from "../../src/interceptor/interceptor";
 import { TimerUtil } from "../../src/util/timer";
+import { DNSPacket } from "../../src/packet/packet";
 
 const CLOUDFLARE_DNS_SERVER = '1.1.1.1';
 const JEST_TIMEOUT = 10000;
@@ -24,22 +25,19 @@ beforeAll(async () => {
 });
 
 describe('DNSQuery with DNS-Over-TLS, querying google.com', () => {
+  let mockPacket = new DNSPacket(Buffer.from(mock.query));
   beforeEach(async () => {
     // Generate a new transaction id
-    mockInstance.header.id = RandomUtil.randomRange(0, MAX_TRANSACTION_ID);
+    mockPacket.headers.id = RandomUtil.randomRange(0, MAX_TRANSACTION_ID);
     await TimerUtil.waitFor(() => client.isTLSReady, WAIT_FOR_DELAY_MS, JEST_TIMEOUT);
     expect(client.isTLSReady).toBeTruthy();
   });
 
   it('should return answers when tls is ready', async () => {
-    mockInstance.header.id = RandomUtil.randomRange(0, MAX_TRANSACTION_ID);
-    const msg = Buffer.alloc(MAX_UDP_PACKET_SIZE);
-    Packet.write(msg, mockInstance);
-
-    const raw = await client.query(msg);
+    const raw = await client.query(mockPacket.getRaw());
   
-    const response = Packet.parse(raw); 
-    expect(response.answer.length).toBeGreaterThan(0);
+    const response = new DNSPacket(raw);
+    expect(response.hasAnswers()).toBe(true);
   });
 });
 

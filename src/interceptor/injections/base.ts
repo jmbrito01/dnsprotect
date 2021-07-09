@@ -1,5 +1,3 @@
-//@ts-ignore
-import Packet from 'native-dns-packet';
 import { DNSPacket } from '../../packet/packet';
 import { MAX_UDP_PACKET_SIZE } from '../interceptor';
 
@@ -80,11 +78,9 @@ export abstract class BaseInjection {
       }
 
       if (injectionResponse.response) {
-        const buffer = Buffer.alloc(MAX_UDP_PACKET_SIZE*2);
-        Packet.write(buffer, injectionResponse.response);
         return {
           halt: false,
-          response: buffer,
+          response: injectionResponse.response,
         }  
       } else {
         return {
@@ -92,8 +88,8 @@ export abstract class BaseInjection {
         }
       }
       
-    } else if (phase === BaseInjectionPhase.AFTER_RESPONSE) {
-      let response = Packet.parse(result);
+    } else if (phase === BaseInjectionPhase.AFTER_RESPONSE && result) {
+      let response = new DNSPacket(result);
       const promises = injections
         .filter(injection => injection.phase === BaseInjectionPhase.AFTER_RESPONSE)
         .map(async injection => {

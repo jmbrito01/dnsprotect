@@ -1,10 +1,6 @@
 import { DNSPacket, DNSPacketOpcode, DNSPacketQR, DNSResponseCode } from "../../src/packet/packet";
 import { DNSQuery, DNSQueryMethod } from "../../src/query/query";
-import { RandomUtil } from "../../src/util/random";
 import mock from './packet.json';
-
-//@ts-ignore
-import Packet from 'native-dns-packet';
 
 describe('DNSPacket with question packet', () => {
   let request: DNSPacket;
