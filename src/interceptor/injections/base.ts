@@ -28,7 +28,6 @@ export abstract class BaseInjection {
     }
 
     const request = Packet.parse(query);
-
     if (phase === BaseInjectionPhase.BEFORE_QUERY) {
       const promises = injections
         .filter(injection => injection.phase === BaseInjectionPhase.BEFORE_QUERY)

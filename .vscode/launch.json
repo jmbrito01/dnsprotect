@@ -86,6 +86,15 @@
 			"runtimeArgs": ["--inspect-brk", "${workspaceRoot}/node_modules/.bin/jest", "--runInBand", "--forceExit", "--coverage", "false"],
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen"
+		},
+
+		{
+			"name": "Debug Current Test File",
+			"type": "node",
+			"request": "launch",
+			"runtimeArgs": ["--inspect-brk", "${workspaceRoot}/node_modules/.bin/jest", "${fileBasenameNoExtension}", "--runInBand", "--forceExit", "--coverage", "false"],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen"
 		}
   ]
 }
