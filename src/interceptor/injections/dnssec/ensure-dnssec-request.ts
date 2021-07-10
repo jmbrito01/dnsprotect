@@ -17,7 +17,7 @@ export interface EnsureDNSSECInjectionOptions {
 }
 
 export class EnsureDNSSECRequestInjection extends BaseInjection {
-  protected logger = new Logger({ prefix: 'ENSURE DNSSEC' });
+  protected logger = new Logger({ prefix: 'DNSSEC BEFORE QUERY' });
 
   public readonly phase = BaseInjectionPhase.BEFORE_QUERY;
 

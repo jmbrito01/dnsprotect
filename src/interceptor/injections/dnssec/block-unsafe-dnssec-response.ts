@@ -10,7 +10,7 @@ export enum EnsureDNSSECMode {
 }
 
 export class BlockDNSSECUnsafeResponseInjection extends BaseInjection {
-  protected logger = new Logger({ prefix: 'BLOCK DNSSEC UNSAFE' });
+  protected logger = new Logger({ prefix: 'DNSSEC BEFORE RESPONSE' });
 
   public readonly phase = BaseInjectionPhase.BEFORE_RESPONSE;
 
