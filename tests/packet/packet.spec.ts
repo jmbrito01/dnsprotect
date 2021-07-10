@@ -65,6 +65,20 @@ describe('DNSPacket with question packet', () => {
 
     expect(error).toBe(false);
   });
+
+  it('should disable/enable authenticated data', async () => {
+    request.disableAuthenticatedData();
+
+    const disabled = new DNSPacket(request.getRaw());
+
+    expect(disabled.headers.flags.authenticatedData).toBe(false);
+
+    disabled.enableAuthenticatedData();
+
+    const enabled = new DNSPacket(disabled.getRaw());
+
+    expect(enabled.headers.flags.authenticatedData).toBe(true);
+  });
 });
 
 describe('DNSPacket with answer packet', () => {

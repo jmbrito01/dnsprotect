@@ -1,3 +1,4 @@
+import { DateUtil } from "../util/date-util";
 import { Logger } from "../util/logger";
 
 export const DNS_PACKET_HEADER_SIZE = 2 * 6; // 6 16bit ints
@@ -23,6 +24,8 @@ export enum DNSPacketRecordType {
   MX = 15,
   AAAA = 28,
   SRV = 33,
+  RRSIG = 46, // DNSSEC
+  DNSKEY = 48, //DNSSEC
 }
 
 export enum DNSPacketClass {
@@ -85,6 +88,29 @@ export interface DNSPacketQuestionRecord {
   class: number;
 }
 
+export interface DNSRRSIGData {
+  typeCovered: number;
+  algorithm: number;
+  labels: number;
+  originalTtl: number;
+  expiration: Date;
+  inception: Date;
+  signature: string,
+  signerName: string;
+  keyTag: number;
+}
+
+export interface DNSKeyData {
+  flags: {
+    _raw: number;
+    zoneKey: boolean;
+    secureEntryPoint: boolean;
+  };
+  protocol: number;
+  algorithm: number;
+  publicKey: string;
+}
+
 export interface DNSPacketResourceRecord {
   name: string;
   type: number;
@@ -98,6 +124,8 @@ export interface DNSPacketResourceRecord {
   mailExchange?: string; // MX
   nameServer?: string; // NS
   fullNameServer?: string; // NS
+  rrsig?: DNSRRSIGData;
+  dnsKey?: DNSKeyData;
 }
 
 export class DNSPacket {
@@ -111,6 +139,20 @@ export class DNSPacket {
 
     this.headers = this.parseHeader();
     this.sections = this.parseSections();
+  }
+
+  public enableAuthenticatedData(): void {
+    if (!this.headers.flags.authenticatedData) {
+      this.headers.flags.authenticatedData = true;
+      this.headers.flags._raw += 32; // 0b100000
+    }
+  }
+
+  public disableAuthenticatedData(): void {
+    if (this.headers.flags.authenticatedData) {
+      this.headers.flags.authenticatedData = false;
+      this.headers.flags._raw -= 32; // 0b100000
+    }
   }
 
   public hasQuestionWithDomain(name: string): boolean {
@@ -256,7 +298,7 @@ export class DNSPacket {
 
     const answers = this.getNextResourceRecord(remainingSections, this.headers.answerCount);
     remainingSections = answers.buffer;
-    sections.answers = this.mapAnswerSection(answers.records);
+    sections.answers = answers.records;
 
     const authority = this.getNextResourceRecord(remainingSections, this.headers.authorityResourceRecordCount);
     remainingSections = authority.buffer;
@@ -314,11 +356,11 @@ export class DNSPacket {
     }
     return {
       buffer: newBuffer,
-      records: sections,
+      records: this.mapRecordRData(sections),
     }
   }
 
-  private mapAnswerSection(records: DNSPacketResourceRecord[]): DNSPacketResourceRecord[] {
+  private mapRecordRData(records: DNSPacketResourceRecord[]): DNSPacketResourceRecord[] {
     return records.map(record => {
       if ([DNSPacketRecordType.A, DNSPacketRecordType.AAAA].indexOf(record.type) !== -1) {
         return {
@@ -365,8 +407,51 @@ export class DNSPacket {
           }
         }
       }
+
+      if (record.type === DNSPacketRecordType.RRSIG) {
+        const typeCovered = record.rdata.readUInt16BE(0);
+        const algorithm = record.rdata.readUInt8(2);
+        const labels = record.rdata.readUInt8(3);
+        const originalTtl = record.rdata.readUInt32BE(4);
+        const expiration = DateUtil.epochSecondsToDate(record.rdata.readUInt32BE(8));
+        const inception =  DateUtil.epochSecondsToDate(record.rdata.readUInt32BE(12));
+        const keyTag = record.rdata.readUInt16BE(16);
+        const signerName = this.readStringLabel(record.rdata, 18);
+        const signature = record.rdata.slice(signerName.size+18).toString('base64');
+        return {
+          ...record,
+          rrsig: {
+            typeCovered, algorithm, labels,
+            originalTtl, expiration, inception,
+            signature, keyTag,
+            signerName: signerName.label,
+          }
+        }
+      }
+
+      if (record.type === DNSPacketRecordType.DNSKEY) {
+        const flags = record.rdata.readUInt16BE(0);
+        const protocol = record.rdata.readUInt8(2);
+        const algorithm = record.rdata.readUInt8(3);
+        const publicKey = record.rdata.slice(4).toString('base64');
+
+        return {
+          ...record,
+          dnsKey: {
+            flags: {
+              _raw: flags,
+              zoneKey: this.getBitsFromNumber(flags, 8, 16) === 1,
+              secureEntryPoint: this.getBitsFromNumber(flags, 16, 16) === 1,
+
+            }, protocol, algorithm, publicKey,
+          }
+        }
+      }
+
      return record;
     });
+
+
   }
 
   private readStringLabel(buffer: Buffer, position: number): { label: string, size: number } {
