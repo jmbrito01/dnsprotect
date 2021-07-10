@@ -7,7 +7,7 @@
     "setup": "husky install",
     "cli": "ts-node ./src/cli/bin.ts",
     "start": "ts-node ./src/cli/bin.ts start",
-    "test": "jest --forceExit --runInBand --silent"
+    "test": "PORT=8000 jest --forceExit --runInBand --silent"
   },
   "dependencies": {
     "@rushstack/ts-command-line": "^4.8.0",

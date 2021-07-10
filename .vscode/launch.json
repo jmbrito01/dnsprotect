@@ -85,7 +85,10 @@
 			"request": "launch",
 			"runtimeArgs": ["--inspect-brk", "${workspaceRoot}/node_modules/.bin/jest", "--runInBand", "--forceExit", "--coverage", "false", "--silent"],
 			"console": "integratedTerminal",
-			"internalConsoleOptions": "neverOpen"
+			"internalConsoleOptions": "neverOpen",
+			"env": {
+				"PORT": "8000",
+			}
 		},
 
 		{
@@ -94,7 +97,10 @@
 			"request": "launch",
 			"runtimeArgs": ["--inspect-brk", "${workspaceRoot}/node_modules/.bin/jest", "${fileBasenameNoExtension}", "--runInBand", "--forceExit", "--coverage", "false"],
 			"console": "integratedTerminal",
-			"internalConsoleOptions": "neverOpen"
+			"internalConsoleOptions": "neverOpen",
+			"env": {
+				"PORT": "8000",
+			}
 		}
   ]
 }
