@@ -13,6 +13,8 @@ import { DNSOverrideInjection, DNSOverrideInjectionOptions } from './injections/
 import { DomainWhiteListInjection, WhiteListInjectionOptions } from './injections/domain-white-list';
 import { LoadBalancingStrategy } from '../util/load-balancing';
 import { DNSQueryCluster } from '../query/query-cluster';
+import { EnsureDNSSECRequestInjection, EnsureDNSSECInjectionOptions } from './injections/dnssec/ensure-dnssec-request';
+import { BlockDNSSECUnsafeResponseInjection } from './injections/dnssec/block-unsafe-dnssec-response';
 
 export const DEFAULT_UDP_PORT = 53;
 export const MAX_UDP_PACKET_SIZE = 512;
@@ -23,6 +25,7 @@ export interface DNSUDPInterceptorInjections {
   domainWhiteList?: false|WhiteListInjectionOptions;
   redis?: false|RedisClientInjectionOptions;
   dnsOverride?: false|DNSOverrideInjectionOptions;
+  ensureDnssec?: false|EnsureDNSSECInjectionOptions;
 }
 
 export interface DNSUDPInterceptorOptions {
@@ -101,6 +104,11 @@ export class DNSUDPInterceptor {
     if (this.options.injections.dnsOverride) {
       this.injections.push(new DNSOverrideInjection(this.options.injections.dnsOverride));
     }
+
+    if (this.options.injections.ensureDnssec) {
+      this.injections.push(new EnsureDNSSECRequestInjection(this.options.injections.ensureDnssec));
+      this.injections.push(new BlockDNSSECUnsafeResponseInjection(this.options.injections.ensureDnssec));
+    }
   }
 
   private async onUDPError(error: Error): Promise<void> {
@@ -125,7 +133,7 @@ export class DNSUDPInterceptor {
           warnFn: (...args: any[]) => {
             this.logger.log('DNS Query returned error, retrying...');
           }
-        }, () => this.query.query(msg));
+        }, () => this.query.query(Buffer.isBuffer(preInjectionResult.query) ? preInjectionResult.query : msg));
         forwardTime = Date.now() - startForwardTime;
 
         const beforeResponseResult = await BaseInjection.executeInjections(this.injections, msg, BaseInjectionPhase.BEFORE_RESPONSE, response);
