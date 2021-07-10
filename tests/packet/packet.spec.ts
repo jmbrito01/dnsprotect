@@ -141,7 +141,6 @@ describe('DNSPacket with answer packet', () => {
 
     expect(newResponse.getId()).toBe(request.getId());
     expect(newResponse.sections.questions.length).toBe(request.sections.questions.length);
-    expect(newResponse.sections.answers.length).toBe(request.sections.questions.length);
     expect(newResponse.sections.answers.length).toBe(newResponse.headers.answerCount);
     expect(newResponse.sections.authority.length).toBe(newResponse.headers.authorityResourceRecordCount);
     expect(newResponse.sections.additional.length).toBe(newResponse.headers.additionalResourceRecordCount);
