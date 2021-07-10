@@ -9,6 +9,7 @@ import { DEFAULT_EMPTY_TTL_CACHE, RedisClientInjectionOptions } from "../../inte
 import { DNSQueryMethod } from "../../query/query";
 import { DNSOverrideMapper } from "../../interceptor/injections/dns-override";
 import { LoadBalancingStrategy } from "../../util/load-balancing";
+import { EnsureDNSSECMode } from "../../interceptor/injections/dnssec/ensure-dnssec-request";
 
 export class SetupCommandAction extends CommandLineAction {
   private outputFile!: CommandLineStringParameter;
@@ -111,6 +112,12 @@ export class SetupCommandAction extends CommandLineAction {
       }
     }
 
+    if (injections.indexOf('ensureDnssec') !== -1) {
+      const result = await inquirer.prompt(DNSSEC_SETUP);
+
+      injectionResult.ensureDnssec = result;
+    }
+
     return injectionResult;
   }
 }
@@ -192,6 +199,7 @@ const INQUIRER_QUESTIONS: inquirer.QuestionCollection[] = [
       { value: 'whiteList', name: 'White List', checked: false },
       { value: 'redis', name: 'Redis Cache', checked: true },
       { value: 'dnsOverride', name: 'DNS Override', checked: true },
+      { value: 'ensureDnssec', name: 'Ensure DNSSEC', checked: true},
     ]
   }
 ]
@@ -279,6 +287,34 @@ const DNS_OVERRIDE_SETUP: inquirer.QuestionCollection[] = [
     name: 'newItem',
     message: 'Do you wish to add a new domain to override?',
     prefix: '[DNS OVERRIDE]',
+    default: false,
+  }
+]
+
+const DNSSEC_SETUP: inquirer.QuestionCollection[] = [
+  {
+    type: 'list',
+    name: 'mode',
+    message: 'Which injection mode do you wish to enable:',
+    prefix: '[DNSSEC]',
+    choices: [
+      { name: 'Change - DEFAULT (If DNSSEC is not asked, change the packet to ask it)', value: EnsureDNSSECMode.CHANGE },
+      { name: 'Block (If DNSSEC is not asked, block the request)', value: EnsureDNSSECMode.BLOCK }
+    ],
+    default: EnsureDNSSECMode.CHANGE,
+  },
+  {
+    type: 'confirm',
+    name: 'logActions',
+    message: 'Do you wish that DNSSEC injection log everything it is doing?',
+    prefix: '[DNSSEC]',
+    default: true,
+  },
+  {
+    type: 'confirm',
+    name: 'blockUnvalidatedDomains',
+    message: 'Do you wish to block all responses that dont use DNSSEC? This will protect you but most websites still dont use DNSSEC so you will have many problems surfing the open web.',
+    prefix: '[DNSSEC]',
     default: false,
   }
 ]
