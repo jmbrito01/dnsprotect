@@ -25,7 +25,9 @@ Now that you have everything running, you can simply set your DNS Server from yo
 - Force DoT (Force DNS-over-TLS in all DNS queries)
 - Domain Black List (used for adblock and no tracking)
 - Domain Whitelist (allow only selected domains to be reached and block all else)
-- FUTURE: DNSSEC
+- DNSSEC
+  - Change Mode: Force all queries to ask for DNSSEC
+  - Block Mode: Set to block all queries that dont ask for DNSSEC or all responses that dont ask answer with DNSSEC
 - FUTURE: Handshake.org DNS Name Resolution
 - FUTURE: Accept DoH and DoT requests
 - FUTURE: DNS-over-QUIC 
