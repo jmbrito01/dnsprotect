@@ -156,7 +156,15 @@ export class DNSUDPInterceptor {
         return;
       }
       
-    } 
+    } else if (preInjectionResult.halt && preInjectionResult.response) {
+      this.logger.info('custom response');
+      return this.server.send(preInjectionResult.response, rinfo.port, rinfo.address, async () => {
+        const totalTime = Date.now() - startTime;
+        this.logger.info(`DNS Query(${chalk.bold.red('BLOCK')}): ${totalTime}ms (Proxy: ${totalTime}ms)`)
+
+        await BaseInjection.executeInjections(this.injections, msg, BaseInjectionPhase.AFTER_RESPONSE, preInjectionResult.response);
+      });
+    }
     const totalTime = Date.now() - startTime;
     this.logger.info(`DNS Query Time(${chalk.bold.red('BLOCK')}): ${totalTime}ms (Proxy: ${totalTime}ms)`)
   }

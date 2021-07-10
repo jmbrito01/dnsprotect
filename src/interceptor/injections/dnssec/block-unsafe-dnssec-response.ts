@@ -28,8 +28,8 @@ export class BlockDNSSECUnsafeResponseInjection extends BaseInjection {
       response.headers.flags.authenticatedData === false
     );
 
-    if (!needsExecution && this.options.logActions) {
-      this.logger.info(chalk.bold.white('DNSSEC'), chalk.bold.green('OK'), 'for TID', query.getId());
+    if (!needsExecution) {
+      this.logger.info(chalk.bold.white('DNSSEC'), chalk.bold.green('VERIFIED'), 'for domain', query.sections.questions.map(q => q.name).join('/'));
     }
 
     return needsExecution;
