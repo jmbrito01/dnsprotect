@@ -62,6 +62,8 @@ export interface DNSPacketHeaderFlags {
     recursionDesired: boolean;
     recursionAvailable: boolean;
     _reserved: number;
+    authenticatedData: boolean;
+    checkingDisabled: boolean;
     _raw: number;
     responseCode: DNSResponseCode;
   }
@@ -221,7 +223,9 @@ export class DNSPacket {
         truncated: this.getBitsFromNumber(flags, 7, FLAG_BIT_SIZE) === 1,
         recursionDesired: this.getBitsFromNumber(flags, 8, FLAG_BIT_SIZE) === 1,
         recursionAvailable: this.getBitsFromNumber(flags, 9, FLAG_BIT_SIZE) === 1,
-        _reserved: this.getBitsFromNumber(flags, 10, FLAG_BIT_SIZE, 3),
+        _reserved: this.getBitsFromNumber(flags, 10, FLAG_BIT_SIZE),
+        authenticatedData: this.getBitsFromNumber(flags, 11, FLAG_BIT_SIZE) === 1,
+        checkingDisabled: this.getBitsFromNumber(flags, 11, FLAG_BIT_SIZE) === 1,
         responseCode: this.getBitsFromNumber(flags, 13, FLAG_BIT_SIZE, 4),
       },
       questionCount: rawHeader.readUInt16BE(4),
