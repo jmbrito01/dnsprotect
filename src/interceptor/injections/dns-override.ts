@@ -21,7 +21,7 @@ export class DNSOverrideInjection extends BaseInjection {
   constructor(protected readonly options: DNSOverrideInjectionOptions) {
     super();
 
-    this.logger.log(`Number of DNS overrides loaded:`, Object.keys(this.options.mappers).length);
+    this.logger.info(`Number of DNS overrides loaded:`, Object.keys(this.options.mappers).length);
   }
 
   public async needsExecution(query: DNSPacket, response: DNSPacket): Promise<boolean> {

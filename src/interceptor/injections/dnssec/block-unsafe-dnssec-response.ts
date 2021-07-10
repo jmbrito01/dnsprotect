@@ -29,7 +29,7 @@ export class BlockDNSSECUnsafeResponseInjection extends BaseInjection {
     );
 
     if (!needsExecution && this.options.logActions) {
-      this.logger.log(chalk.bold.white('DNSSEC'), chalk.bold.green('OK'), 'for TID', query.getId());
+      this.logger.info(chalk.bold.white('DNSSEC'), chalk.bold.green('OK'), 'for TID', query.getId());
     }
 
     return needsExecution;

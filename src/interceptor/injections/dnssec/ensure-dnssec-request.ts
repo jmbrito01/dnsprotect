@@ -48,7 +48,7 @@ export class EnsureDNSSECRequestInjection extends BaseInjection {
 
     if (this.options.mode === EnsureDNSSECMode.CHANGE) {
       if (this.options.logActions) {
-        this.logger.log(chalk.bold.yellow('CHANGED'), 'TID', query.getId(), 'to ensure asking for', chalk.bold.green('DNSSEC'));
+        this.logger.info(chalk.bold.yellow('CHANGED'), 'TID', query.getId(), 'to ensure asking for', chalk.bold.green('DNSSEC'));
       }
 
       query.enableAuthenticatedData();

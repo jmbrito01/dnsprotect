@@ -19,8 +19,6 @@ export class SaveCacheInjection extends BaseInjection {
     this.client.on('error', (error) => {
       this.logger.error('Redis Client returned error: ', error);
     });
-
-    this.logger.log('Ready to be used.');
   }
 
   public async needsExecution(query: DNSPacket, result: DNSPacket): Promise<boolean> {

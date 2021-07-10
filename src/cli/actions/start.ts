@@ -27,7 +27,7 @@ export class StartCommandAction extends CommandLineAction {
     });
 
     if (cluster.isMaster && this._workerCount.value && this._workerCount.value > 1) {
-      this.logger.log('Starting master process:', process.pid);
+      this.logger.info('Starting master process:', process.pid);
 
       process.on('SIGINT', () => this.onMasterRequestToExit());
       cluster.on('exit', (worker, code, signal) => this.onWorkerExit(worker, code, signal));
@@ -40,7 +40,7 @@ export class StartCommandAction extends CommandLineAction {
       }
 
     } else {
-      this.logger.log('Starting worker process:', process.pid);
+      this.logger.info('Starting worker process:', process.pid);
       this.server = new DNSUDPInterceptor(config.getFull());
       await this.server.bind();
 
@@ -70,7 +70,7 @@ export class StartCommandAction extends CommandLineAction {
     this.isExiting = true;
 
     this.workers.forEach((worker) => {
-      this.logger.log('Sending exit command to worker', worker.process.pid);
+      this.logger.info('Sending exit command to worker', worker.process.pid);
       worker.send({cmd: 'STOP'});
     });
   }
@@ -80,25 +80,25 @@ export class StartCommandAction extends CommandLineAction {
     this.workers.delete(worker.id);
     if (this._workerCount.value && this._workerCount.value > this.workers.size && !this.isExiting && code !== 1) {
       const delta = this._workerCount.value - this.workers.size;
-      this.logger.log('Worker count is below minimum(', this._workerCount.value, ') creating', delta, 'more.');
+      this.logger.info('Worker count is below minimum(', this._workerCount.value, ') creating', delta, 'more.');
       this.createWorkerProcess();
     } else if (this.workers.size === 0) {
       // No more workers, time to exit master
-      this.logger.log('No more workers running, exiting main process...');
+      this.logger.info('No more workers running, exiting main process...');
       process.exit(0);
     }
   }
 
   private async onWorkerMessage(msg: any): Promise<void> {
     if (msg.cmd === 'STOP') {
-      this.logger.log('Worker', process.pid, 'is stopping because master process requested.');
+      this.logger.info('Worker', process.pid, 'is stopping because master process requested.');
       await this.server.unbind();
       process.exit(1);
     }
   }
 
   private createWorkerProcess(): void {
-    this.logger.log('Creating new worker process');
+    this.logger.info('Creating new worker process');
     const worker = cluster.fork();
     this.workers.set(worker.id, worker);
   }

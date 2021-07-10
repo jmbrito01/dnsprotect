@@ -153,9 +153,13 @@ export class DNSQuery {
     });
 
     this.tlsClient.setKeepAlive(true);
+    this.tlsClient.setTimeout(0, () => {
+      this.logger.log('DNS-Over-TLS - Connection timeout.');
+    })
+    this.tlsClient.setNoDelay(true);
 
     this.tlsClient.on('data', this.onTLSData.bind(this));
-    this.tlsClient.on('end', this.onTLSClose.bind(this));
+    this.tlsClient.on('close', this.onTLSClose.bind(this));
   }
 
   private async reprocessTLSQueue(): Promise<void> {
@@ -168,10 +172,10 @@ export class DNSQuery {
     }
   }
 
-  private onTLSClose(): void {
+  private onTLSClose(hadError: boolean): void {
     this.isTLSReady = false;
     this.isConnecting = false;
-    this.logger.log('DNS-Over-TLS - Connection closed. Reconnecting...');
+    this.logger.log('DNS-Over-TLS - Connection closed. Reconnecting... Had Error:', hadError);
 
     this.tlsPromises.forEach((promise, key) => {
       this.logger.log('DNS-Over-TLS - Rejecting query', key, 'because connection closed.');

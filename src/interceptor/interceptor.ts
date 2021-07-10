@@ -117,13 +117,10 @@ export class DNSUDPInterceptor {
 
   private async onUDPMessage(msg: Uint8Array, rinfo: dgram.RemoteInfo): Promise<void> {
     const startTime = Date.now();
-    this.logger.log('New DNS query received.');
-    const startForwardTime = Date.now();
-
     const preInjectionResult = await BaseInjection.executeInjections(this.injections, msg, BaseInjectionPhase.BEFORE_QUERY);
  
     if (!preInjectionResult.halt) {
-      
+      const startForwardTime = Date.now();
       try {
         let forwardTime = 0;
         let response: any;
@@ -131,7 +128,7 @@ export class DNSUDPInterceptor {
           retries: this.options.forwardRetries,
           warnErrors: true,
           warnFn: (...args: any[]) => {
-            this.logger.log('DNS Query returned error, retrying...');
+            this.logger.warn('DNS Query returned error, retrying...');
           }
         }, () => this.query.query(Buffer.isBuffer(preInjectionResult.query) ? preInjectionResult.query : msg));
         forwardTime = Date.now() - startForwardTime;
@@ -147,7 +144,7 @@ export class DNSUDPInterceptor {
 
         return this.server.send(response, rinfo.port, rinfo.address, async () => {
           const totalTime = Date.now() - startTime;
-          this.logger.log(`DNS Query Time(${chalk.bold.green('OK')}): ${totalTime}ms (Proxy: ${totalTime-forwardTime}ms / Forward Server: ${forwardTime}ms)`)
+          this.logger.info(`DNS Query(${chalk.bold.green('OK')}): ${totalTime}ms (Proxy: ${totalTime-forwardTime}ms / Forward Server: ${forwardTime}ms)`)
 
           await BaseInjection.executeInjections(this.injections, msg, BaseInjectionPhase.AFTER_RESPONSE, response);
         });
