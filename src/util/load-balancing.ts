@@ -21,6 +21,7 @@ export class LoadBalancing {
         break;
       case LoadBalancingStrategy.ROUND_ROBIN:
         idx = this.getRoundRobinNext(load.length - 1);
+        break;
       default:
         throw new Error(`Cant pick load balancing option. Strategy ${this.options.strategy} cant be handled.`);
     }

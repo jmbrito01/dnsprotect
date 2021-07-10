@@ -9,6 +9,7 @@ export enum BaseInjectionPhase {
 
 export interface BaseInjectionExecutionResult {
   halt?: boolean;
+  query?: Buffer;
   response?: Buffer;
 }
 
@@ -47,6 +48,7 @@ export abstract class BaseInjection {
       return {
         halt: response.find(each => each.halt) !== undefined,
         response: response.find(each => each.response)?.response,
+        query: response.find(each => each.query)?.query,
       }
     } else if (phase === BaseInjectionPhase.BEFORE_RESPONSE) {
       if (!result) {

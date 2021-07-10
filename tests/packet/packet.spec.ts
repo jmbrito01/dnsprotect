@@ -1,6 +1,6 @@
 import { DNSPacket, DNSPacketOpcode, DNSPacketQR, DNSResponseCode } from "../../src/packet/packet";
 import { DNSQuery, DNSQueryMethod } from "../../src/query/query";
-import mock from './packet.json';
+import mock from './packet.mock.json';
 
 describe('DNSPacket with question packet', () => {
   let request: DNSPacket;
@@ -65,6 +65,20 @@ describe('DNSPacket with question packet', () => {
 
     expect(error).toBe(false);
   });
+
+  it('should disable/enable authenticated data', async () => {
+    request.disableAuthenticatedData();
+
+    const disabled = new DNSPacket(request.getRaw());
+
+    expect(disabled.headers.flags.authenticatedData).toBe(false);
+
+    disabled.enableAuthenticatedData();
+
+    const enabled = new DNSPacket(disabled.getRaw());
+
+    expect(enabled.headers.flags.authenticatedData).toBe(true);
+  });
 });
 
 describe('DNSPacket with answer packet', () => {
@@ -127,7 +141,6 @@ describe('DNSPacket with answer packet', () => {
 
     expect(newResponse.getId()).toBe(request.getId());
     expect(newResponse.sections.questions.length).toBe(request.sections.questions.length);
-    expect(newResponse.sections.answers.length).toBe(request.sections.questions.length);
     expect(newResponse.sections.answers.length).toBe(newResponse.headers.answerCount);
     expect(newResponse.sections.authority.length).toBe(newResponse.headers.authorityResourceRecordCount);
     expect(newResponse.sections.additional.length).toBe(newResponse.headers.additionalResourceRecordCount);
