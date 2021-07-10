@@ -15,7 +15,7 @@ describe('DNSQuery Cluster', () => {
   
   beforeEach(async () => {
     // Generate a new transaction id
-    mockPacket.headers.id = RandomUtil.randomRange(0, 99999);
+    mockPacket.headers.id = RandomUtil.randomRange(0, 65535);
   });
   
   it('should query google.com', async () => {
