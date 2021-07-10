@@ -11,7 +11,7 @@ let client: DNSQuery;
 
 describe('DNSQuery with DNS-Over-HTTPS and CloudFlare DNS', () => {
   jest.setTimeout(15000);
-  let mockPacket = new DNSPacket(Buffer.from(mock.query));
+  let mockPacket = new DNSPacket(Buffer.from(mock.query, 'base64'));
   
   beforeAll(async () => {
     client = new DNSQuery({
@@ -22,7 +22,7 @@ describe('DNSQuery with DNS-Over-HTTPS and CloudFlare DNS', () => {
   
   beforeEach(async () => {
     // Generate a new transaction id
-    mockPacket.headers.id = RandomUtil.randomRange(0, 99999);
+    mockPacket.headers.id = RandomUtil.randomRange(0, 65535);
   })
   
   it('should query google.com and return answers', async () => {

@@ -9,7 +9,7 @@ import { DNSPacket } from "../../src/packet/packet";
 
 const CLOUDFLARE_DNS_SERVER = '1.1.1.1';
 const JEST_TIMEOUT = 10000;
-const MAX_TRANSACTION_ID = 99999;
+const MAX_TRANSACTION_ID = 65535;
 const WAIT_FOR_DELAY_MS = 250;
 
 let client: DNSQuery;
@@ -25,7 +25,7 @@ beforeAll(async () => {
 });
 
 describe('DNSQuery with DNS-Over-TLS, querying google.com', () => {
-  let mockPacket = new DNSPacket(Buffer.from(mock.query));
+  let mockPacket = new DNSPacket(Buffer.from(mock.query, 'base64'));
   beforeEach(async () => {
     // Generate a new transaction id
     mockPacket.headers.id = RandomUtil.randomRange(0, MAX_TRANSACTION_ID);

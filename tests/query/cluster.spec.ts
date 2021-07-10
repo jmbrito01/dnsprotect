@@ -11,7 +11,7 @@ let mockInstance = mock;
 
 describe('DNSQuery Cluster', () => {
   jest.setTimeout(15000);
-  let mockPacket = new DNSPacket(Buffer.from(mock.query));
+  let mockPacket = new DNSPacket(Buffer.from(mock.query, 'base64'));
   
   beforeEach(async () => {
     // Generate a new transaction id
