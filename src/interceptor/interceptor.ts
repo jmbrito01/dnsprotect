@@ -1,8 +1,6 @@
 import dgram from 'dgram';
 import { DNSQuery, DNSQueryMethod } from '../query/query';
 import { BaseInjection, BaseInjectionPhase } from './injections/base';
-//@ts-ignore
-import Packet from 'native-dns-packet';
 import { DomainBlackListInjection, BlackListInjectionOptions } from './injections/domain-black-list';
 import { Logger } from '../util/logger';
 import { RetryUtil } from '../util/retry-util';
@@ -146,8 +144,6 @@ export class DNSUDPInterceptor {
           await BaseInjection.executeInjections(this.injections, msg, BaseInjectionPhase.AFTER_RESPONSE, response);
         });
       } catch (e) {
-        const packet = Packet.parse(msg);
-        
         if (e instanceof Error) {
           this.logger.error('Error with DNS Query: ', e.message);
           this.logger.error(e.stack);  

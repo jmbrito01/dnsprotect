@@ -1,5 +1,6 @@
 import { readFileSync } from "fs";
 import { join } from "path";
+import { DNSPacket } from "../../packet/packet";
 import { Logger } from "../../util/logger";
 import { BaseInjection, BaseInjectionExecutionResult, BaseInjectionPhase } from "./base";
 
@@ -41,10 +42,10 @@ export class DomainWhiteListInjection extends BaseInjection {
     this.logger.info(`Total of ${count} Whitelisted domains loaded.`);
   }
 
-  public async needsExecution(query: any): Promise<boolean> {
-    const questions = query.question;
+  public async needsExecution(query: DNSPacket): Promise<boolean> {
+    const questions = query.sections.questions;
 
-    if (questions instanceof Array && questions.length > 0) {
+    if (query.hasQuestions() && !query.isReply()) {
       const found = questions.filter(question => this.WhiteList[question.name] !== undefined);
       // If not explicitly whitelisted, we should halt
       return found.length === 0;
@@ -52,7 +53,7 @@ export class DomainWhiteListInjection extends BaseInjection {
     return true;
   }
 
-  public async onExecute(query: any): Promise<BaseInjectionExecutionResult> {
+  public async onExecute(): Promise<BaseInjectionExecutionResult> {
     // If URL matched, always block it.
     return {
       halt: true,

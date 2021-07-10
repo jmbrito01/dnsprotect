@@ -2,9 +2,8 @@ import Redis from "redis";import { promisify } from "util";
 import { DEFAULT_EMPTY_TTL_CACHE, RedisClientInjectionOptions, REDIS_CLIENT_KEY_PREFIX } from ".";
 import { Logger } from "../../../util/logger";
 import { BaseInjection, BaseInjectionExecutionResult, BaseInjectionPhase } from "../base";
-//@ts-ignore
-import Packet from 'native-dns-packet';
 import { MAX_UDP_PACKET_SIZE } from "../../interceptor";
+import { DNSPacket } from "../../../packet/packet";
 
 export class SaveCacheInjection extends BaseInjection {
   protected client!: Redis.RedisClient;
@@ -24,22 +23,19 @@ export class SaveCacheInjection extends BaseInjection {
     this.logger.log('Ready to be used.');
   }
 
-  public async needsExecution(query: any, result: any): Promise<boolean> {
-    const answers = result.answer || [];
-    return answers.length > 0 || this.options.cacheEmptyResults === true;
+  public async needsExecution(query: DNSPacket, result: DNSPacket): Promise<boolean> {
+    return result.hasAnswers() || this.options.cacheEmptyResults === true;
   }
 
-  public async onExecute(query: any, result: any): Promise<BaseInjectionExecutionResult> {
-    const answers = result.answer || [];
+  public async onExecute(query: any, result: DNSPacket): Promise<BaseInjectionExecutionResult> {
+    const answers = result.sections.answers;
 
     const keyName = answers.map((a: any) => a.name).join('.');
 
     const exists = await this.cacheExists(`${REDIS_CLIENT_KEY_PREFIX}${keyName}`);
 
     if (!exists) {
-      const buffer = Buffer.alloc(MAX_UDP_PACKET_SIZE);
-      Packet.write(buffer, result);
-      await this.setCache(`${REDIS_CLIENT_KEY_PREFIX}${keyName}`, buffer.toString('base64'), this.getMinTTL(answers));
+      await this.setCache(`${REDIS_CLIENT_KEY_PREFIX}${keyName}`, result.getRaw().toString('base64'), this.getMinTTL(answers));
     }
 
     return {

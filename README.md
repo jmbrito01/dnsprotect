@@ -1,6 +1,6 @@
 # DNSProtect
 
-DNSProtect is a DNS Server built for security and privacy.
+DNSProtect is a local DNS Server built for security and privacy.
 
 ## Getting Started
 
@@ -30,7 +30,6 @@ Now that you have everything running, you can simply set your DNS Server from yo
 - FUTURE: Accept DoH and DoT requests
 - FUTURE: DNS-over-QUIC 
 - FUTURE: DNS-over-DTLS
-- FUTURE: DNS-over-HTTPS using a QUIC transport
 - FUTURE: DNSCrypt and Anonymized DNSCrypt
 - FUTURE DNS-over-blockchain (https://ens.domains/)
 - FUTURE: DNS over Tor
@@ -46,3 +45,4 @@ Now that you have everything running, you can simply set your DNS Server from yo
 **Development**
 - DNS Overrides (Override DNS resolutions for you selected IPs)
 - FUTURE: Monitoring (Prometheus)
+- FUTURE NAT64
