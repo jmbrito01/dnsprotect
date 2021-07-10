@@ -6,13 +6,13 @@ DNSProtect is a local DNS Server built for security and privacy.
 
 Create a config file in your first run running
 ```bash
-dnsprotect setup -o myconfig.json
+docker run -it -v ${pwd}:/usr/src/dnsprotect/config jmbrito/dnsprotect setup -o ./config/myconfig.json
 ```
 The default configuration should work fine, if you need to customize something, feel free. After all questions, you should see a myconfig.json in the directory you ran the command.
 
 Start the DNS server:
 ```bash
-dnsprotect start -c myconfig.json
+docker run -it -v ${pwd}:/usr/src/dnsprotect/config -p 53:8000 -e PORT=8000 jmbrito/dnsprotect start -c ./config/myconfig.json -w 1
 ```
 
 Now that you have everything running, you can simply set your DNS Server from your PC to `localhost` and everything should start working.
