@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { DNSPacket } from "../../packet/packet";
@@ -48,7 +49,13 @@ export class DomainBlackListInjection extends BaseInjection {
     if (query.hasQuestions() && !query.isReply()) {
       const found = questions.filter(question => this.blackList[question.name] !== undefined);
 
-      return found.length > 0;
+      const needs = found.length > 0;
+
+      if (needs) {
+        this.logger.info(chalk.bold.red('BLOCKED'), 'domain query:', questions.map(q => q.name).join('/'));
+      }
+
+      return needs;
     }
     return false;
   }
