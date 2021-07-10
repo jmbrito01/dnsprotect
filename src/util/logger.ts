@@ -35,7 +35,7 @@ export class Logger {
   private formatInput(...args: any[]): any[] {
     let newArgs = args;
     if (this.options.prefix) {
-      newArgs = [chalk.blue(`[${this.options.prefix}]`), ...args]
+      newArgs = [chalk.gray(`[${new Date().toISOString()}]`), chalk.blue(`[${this.options.prefix}]`), ...args]
     }
 
     return newArgs;
