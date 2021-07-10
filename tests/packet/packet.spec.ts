@@ -114,7 +114,8 @@ describe('DNSPacket with answer packet', () => {
     expect(answers.length).toBeGreaterThan(0);
     const answer = answers[0];
     expect(answer.name).toBe(request.sections.questions[0].name);
-    expect(answer.address.length).toBeGreaterThan(0);
+    expect(answer.address).toBeDefined();
+    expect(answer.address?.length).toBeGreaterThan(0);
   });
 
   it('should be able to parse a valid raw packet', async () => {
@@ -130,6 +131,5 @@ describe('DNSPacket with answer packet', () => {
     expect(newResponse.sections.answers.length).toBe(newResponse.headers.answerCount);
     expect(newResponse.sections.authority.length).toBe(newResponse.headers.authorityResourceRecordCount);
     expect(newResponse.sections.additional.length).toBe(newResponse.headers.additionalResourceRecordCount);
-    //const answerKey = answer
   });
 });

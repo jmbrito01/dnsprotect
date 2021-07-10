@@ -75,7 +75,7 @@ export interface DNSPacketHeaderFlags {
 
 export interface DNSPacketSections {
   questions: DNSPacketQuestionRecord[];
-  answers: DNSPacketAnswerRecord[];
+  answers: DNSPacketResourceRecord[];
   authority: DNSPacketResourceRecord[];
   additional: DNSPacketResourceRecord[];
 }
@@ -92,10 +92,12 @@ export interface DNSPacketResourceRecord {
   ttl: number;
   rdataSize: number;
   rdata: Buffer;
-}
-
-export interface DNSPacketAnswerRecord extends DNSPacketResourceRecord {
-  address: string;
+  address?: string; // A , AAAA 
+  canonicalName?: string; // CNAME
+  priority?: number; // MX
+  mailExchange?: string; // MX
+  nameServer?: string; // NS
+  fullNameServer?: string; // NS
 }
 
 export class DNSPacket {
@@ -316,11 +318,55 @@ export class DNSPacket {
     }
   }
 
-  private mapAnswerSection(records: DNSPacketResourceRecord[]): DNSPacketAnswerRecord[] {
-    return records.map(record => ({
-     ...record,
-      address: record.rdata.map(byte => byte).join('.')
-    }));
+  private mapAnswerSection(records: DNSPacketResourceRecord[]): DNSPacketResourceRecord[] {
+    return records.map(record => {
+      if ([DNSPacketRecordType.A, DNSPacketRecordType.AAAA].indexOf(record.type) !== -1) {
+        return {
+          ...record,
+          address: record.rdata.map(byte => byte).join('.'),
+        }
+      }
+      
+      if (record.rdataSize === 4) {
+        const address = record.rdata.map(byte => byte).join('.');
+        this.logger.warn('Not A or AAAA record but looks like an IP: type=', record.type, 'address=', address);
+      }
+
+      if ([DNSPacketRecordType.PTR, DNSPacketRecordType.NS].indexOf(record.type) !== -1) {
+        const nameServer = this.readStringLabel(record.rdata, 0);
+        const r = {
+          ...record,
+          nameServer: nameServer.label,
+          fullNameServer: [nameServer.label, record.name].join('.'),
+        };
+        this.logger.warn('Name server parsed: ', r);
+        return r;
+      }
+
+      if (record.type === DNSPacketRecordType.MX) {
+        const priority = record.rdata.readUInt16BE(0);
+        const mailExchange = this.readStringLabel(record.rdata, 2);
+        const r: DNSPacketResourceRecord = {
+          ...record,
+          priority,
+          mailExchange: mailExchange.label,
+        }
+        this.logger.warn('Found MX Record type, heres what we found: ', r);
+        return r;
+      }
+
+      if (record.type === DNSPacketRecordType.CNAME) {
+        const name = this.readStringLabel(record.rdata, 0);
+
+        if (name.size > 0) {
+          return {
+            ...record,
+            canonicalName: name.label,
+          }
+        }
+      }
+     return record;
+    });
   }
 
   private readStringLabel(buffer: Buffer, position: number): { label: string, size: number } {
