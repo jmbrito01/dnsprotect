@@ -160,6 +160,7 @@ export class DNSQuery {
 
     this.tlsClient.on('data', this.onTLSData.bind(this));
     this.tlsClient.on('close', this.onTLSClose.bind(this));
+    this.tlsClient.on('error', this.onTLSError.bind(this));
   }
 
   private async reprocessTLSQueue(): Promise<void> {
@@ -186,6 +187,10 @@ export class DNSQuery {
     if (!this.isClosing) {
       this.createTLSClient();
     }
+  }
+
+  private onTLSError(error: Error): void {
+    this.logger.error('TLS Socket thrown an error:', error);
   }
 
   private async onTLSData(buffer: Buffer): Promise<void> {
